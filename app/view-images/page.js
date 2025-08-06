@@ -105,7 +105,7 @@ export default function ViewImagesPage() {
     setSelectedSubCategory('all')
   }
 
-  const getImageUrl = (path) => `https://bmb-content-server.vercel.app/${path}`
+  const getImageUrl = (path) => `https://content.beyondmebtw.com/${path}`
 
   const copyToClipboard = async (text, type) => {
     try {
