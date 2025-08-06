@@ -4,7 +4,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'bmb-content-server.vercel.app',
+        hostname: 'content.beyondmebtw.com',
         pathname: '/**',
       },
     ],
