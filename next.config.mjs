@@ -7,6 +7,11 @@ const nextConfig = {
         hostname: 'content.beyondmebtw.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'bmb-content-server.vercel.app',
+        pathname: '/**',
+      },
     ],
   },
 };
