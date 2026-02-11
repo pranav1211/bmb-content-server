@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(where:*)",
+      "Bash(\"C:\\\\Program Files\\\\nodejs\\\\npm.cmd\" install --prefix \"c:\\\\Users\\\\pranav\\\\Documents\\\\BMB\\\\BMB Content Server\" express multer express-session bcrypt uuid dotenv)",
+      "Bash(cmd /c \"cd /d \"\"c:\\\\Users\\\\pranav\\\\Documents\\\\BMB\\\\BMB Content Server\"\" && npm install express multer express-session bcrypt uuid dotenv\")",
+      "Bash(powershell -Command \"Set-Location ''c:\\\\Users\\\\pranav\\\\Documents\\\\BMB\\\\BMB Content Server''; npm install express multer express-session bcrypt uuid dotenv\")",
+      "Bash(PATH=\"/c/Program Files/nodejs:$PATH\")",
+      "Bash(node -e:*)"
+    ]
+  }
+}
