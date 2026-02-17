@@ -43,7 +43,7 @@ app.get('/thumb/:width/*imgPath', (req, res) => {
   const width = parseInt(req.params.width);
   if (!ALLOWED_WIDTHS.includes(width)) return res.status(400).send('Invalid width');
 
-  const imgPath = req.params.imgPath;
+  const imgPath = Array.isArray(req.params.imgPath) ? req.params.imgPath.join('/') : req.params.imgPath;
   const srcFile = path.resolve(thumbDir, imgPath);
   if (!srcFile.startsWith(thumbDir) || !fs.existsSync(srcFile)) return res.status(404).send('Not found');
 
