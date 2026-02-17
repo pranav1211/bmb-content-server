@@ -12,6 +12,9 @@ const PORT = process.env.PORT || 3000;
 const dataDir = path.join(__dirname, 'data');
 const metadataPath = path.join(dataDir, 'metadata.json');
 
+// Trust nginx reverse proxy
+app.set('trust proxy', 1);
+
 // ===== ENSURE DIRECTORIES =====
 ['uploads/thumbnails', 'uploads/posts', 'data'].forEach(dir => {
   const fullPath = path.join(__dirname, dir);
@@ -28,7 +31,11 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'fallback-secret-change-me',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false, httpOnly: true, maxAge: 24 * 60 * 60 * 1000 }
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000
+  }
 }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(path.join(__dirname, 'public')));
