@@ -50,10 +50,12 @@ app.get('/thumb/:width/*imgPath', (req, res) => {
   const cacheKey = `${width}-${imgPath.replace(/[/\\]/g, '_')}`;
   const cachePath = path.join(thumbCacheDir, cacheKey);
 
+  const ext = path.extname(srcFile).slice(1) || 'webp';
+
   if (fs.existsSync(cachePath)) {
     res.set('Cache-Control', 'public, max-age=31536000, immutable');
-    res.type(path.extname(srcFile) || 'webp');
-    return res.sendFile(cachePath);
+    res.type(ext);
+    return fs.createReadStream(cachePath).pipe(res);
   }
 
   sharp(srcFile)
@@ -61,8 +63,8 @@ app.get('/thumb/:width/*imgPath', (req, res) => {
     .toFile(cachePath)
     .then(() => {
       res.set('Cache-Control', 'public, max-age=31536000, immutable');
-      res.type(path.extname(srcFile) || 'webp');
-      res.sendFile(cachePath);
+      res.type(ext);
+      fs.createReadStream(cachePath).pipe(res);
     })
     .catch(() => res.status(500).send('Resize failed'));
 });
