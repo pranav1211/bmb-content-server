@@ -23,9 +23,35 @@
 
   <!-- Toast -->
   <div id="toast" class="fixed top-4 right-4 z-50 transform translate-x-[120%] transition-transform duration-300">
-    <div class="px-5 py-3 rounded-xl shadow-lg bg-emerald-50 border border-emerald-200 flex items-center gap-2">
-      <span class="text-emerald-600 font-bold">&check;</span>
+    <div id="toastContent" class="px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 bg-emerald-50 border border-emerald-200">
+      <span id="toastIcon" class="font-bold text-emerald-600">&check;</span>
       <span id="toastMsg" class="text-sm font-medium text-emerald-800">Copied!</span>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="fixed inset-0 bg-black/50 z-40 hidden items-center justify-center p-4" onclick="closeEditModal()">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6" onclick="event.stopPropagation()">
+      <h3 class="text-lg font-semibold text-slate-900 mb-4">Edit Thumbnail</h3>
+      <input type="hidden" id="editId">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Filename</label>
+          <input id="editName" type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Category</label>
+          <select id="editCategory" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" onchange="updateEditSubcategories()"></select>
+        </div>
+        <div id="editSubWrap">
+          <label class="block text-sm font-medium text-slate-700 mb-1">Subcategory</label>
+          <select id="editSubcategory" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"></select>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 mt-6">
+        <button onclick="closeEditModal()" class="px-4 py-2 text-sm text-slate-600 hover:text-slate-800">Cancel</button>
+        <button onclick="saveEdit()" class="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Save</button>
+      </div>
     </div>
   </div>
 
@@ -58,6 +84,14 @@
 
     <!-- Gallery Grid -->
     <div id="gallery" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+
+    <!-- Load More -->
+    <div id="loadMoreWrap" class="hidden text-center mt-8">
+      <button id="loadMoreBtn" onclick="loadMore()" class="bg-slate-700 hover:bg-slate-800 text-white font-medium px-8 py-3 rounded-lg transition-colors">
+        Load More
+      </button>
+      <p id="loadMoreText" class="text-sm text-slate-400 mt-2"></p>
+    </div>
   </main>
 
   <!-- Lightbox -->
@@ -69,10 +103,29 @@
   </div>
 
   <script>
+    const PAGE_SIZE = 16;
     let allThumbnails = [];
     let categories = [];
     let activeCat = 'all';
     let activeSub = 'all';
+    let displayCount = PAGE_SIZE;
+    let toastTimer;
+
+    function showToast(msg, type = 'success') {
+      clearTimeout(toastTimer);
+      const content = document.getElementById('toastContent');
+      const icon = document.getElementById('toastIcon');
+      document.getElementById('toastMsg').textContent = msg;
+      if (type === 'success') {
+        content.className = 'px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 bg-emerald-50 border border-emerald-200';
+        icon.textContent = '\u2713'; icon.className = 'font-bold text-emerald-600';
+      } else {
+        content.className = 'px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 bg-red-50 border border-red-200';
+        icon.textContent = '\u2717'; icon.className = 'font-bold text-red-600';
+      }
+      document.getElementById('toast').style.transform = 'translateX(0)';
+      toastTimer = setTimeout(() => { document.getElementById('toast').style.transform = 'translateX(120%)'; }, 2000);
+    }
 
     function openLightbox(src) {
       const lb = document.getElementById('lightbox');
@@ -87,19 +140,11 @@
     }
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
-    let toastTimer;
-    function showCopied(msg) {
-      clearTimeout(toastTimer);
-      document.getElementById('toastMsg').textContent = msg || 'Copied!';
-      document.getElementById('toast').style.transform = 'translateX(0)';
-      toastTimer = setTimeout(() => { document.getElementById('toast').style.transform = 'translateX(120%)'; }, 2000);
-    }
-
-    async function copyLink(path) {
-      const url = window.location.origin + path;
+    async function copyLink(p) {
+      const url = window.location.origin + p;
       try { await navigator.clipboard.writeText(url); }
       catch { const ta = document.createElement('textarea'); ta.value = url; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
-      showCopied('Link copied!');
+      showToast('Link copied!');
     }
 
     function getFiltered() {
@@ -109,20 +154,26 @@
       return items;
     }
 
-    function renderGallery(thumbnails) {
+    function renderGallery() {
       const gallery = document.getElementById('gallery');
       const empty = document.getElementById('empty');
       const countText = document.getElementById('countText');
+      const loadMoreWrap = document.getElementById('loadMoreWrap');
+      const filtered = getFiltered();
 
-      if (thumbnails.length === 0) {
+      if (filtered.length === 0) {
         gallery.classList.add('hidden'); empty.classList.remove('hidden');
+        loadMoreWrap.classList.add('hidden');
         countText.textContent = '0 thumbnails'; return;
       }
 
       empty.classList.add('hidden'); gallery.classList.remove('hidden');
-      countText.textContent = `${thumbnails.length} thumbnail${thumbnails.length === 1 ? '' : 's'}`;
+      countText.textContent = `${filtered.length} thumbnail${filtered.length === 1 ? '' : 's'}`;
 
-      gallery.innerHTML = thumbnails.map(t => `
+      const visible = filtered.slice(0, displayCount);
+      const remaining = filtered.length - displayCount;
+
+      gallery.innerHTML = visible.map(t => `
         <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group">
           <div class="aspect-video relative overflow-hidden bg-slate-100 cursor-pointer" onclick="openLightbox('${t.path}')">
             <img src="${t.path}" alt="${t.originalName}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy"
@@ -131,50 +182,132 @@
               <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             </div>
           </div>
-          <div class="grid grid-cols-2 min-h-[72px]">
-            <div class="p-3 flex flex-col justify-between">
-              <p class="text-sm font-medium text-slate-800 truncate" title="${t.originalName}">${t.originalName}</p>
-              <div class="flex items-center gap-1.5 mt-1">
-                <span class="text-xs font-medium text-slate-500">${t.categoryName}</span>
-                ${t.subcategoryName ? `<span class="text-xs text-slate-300">-</span><span class="text-xs text-amber-600">${t.subcategoryName}</span>` : ''}
+          <div class="p-3">
+            <div class="flex items-start justify-between mb-2">
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium text-slate-800 truncate" title="${t.originalName}">${t.originalName}</p>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span class="text-xs font-medium text-slate-500">${t.categoryName}</span>
+                  ${t.subcategoryName ? `<span class="text-xs text-slate-300">-</span><span class="text-xs text-amber-600">${t.subcategoryName}</span>` : ''}
+                </div>
+              </div>
+              <div class="flex items-center gap-0.5 ml-2 flex-shrink-0">
+                <button onclick="event.stopPropagation(); openEditModal('${t.id}', '${t.filename.replace(/'/g, "\\'")}', '${t.category}', '${t.subcategory}')" class="text-slate-400 hover:text-amber-500 p-1 transition-colors" title="Edit">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </button>
+                <button onclick="event.stopPropagation(); deleteThumbnail('${t.id}')" class="text-slate-400 hover:text-red-500 p-1 transition-colors" title="Delete">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
               </div>
             </div>
-            <button onclick="event.stopPropagation(); copyLink('${t.path}')" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium flex items-center justify-center gap-2 transition-colors rounded-br-xl">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+            <button onclick="event.stopPropagation(); copyLink('${t.path}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
               Copy Link
             </button>
           </div>
         </div>
       `).join('');
+
+      if (remaining > 0) {
+        loadMoreWrap.classList.remove('hidden');
+        document.getElementById('loadMoreText').textContent = `Showing ${visible.length} of ${filtered.length}`;
+      } else {
+        loadMoreWrap.classList.add('hidden');
+      }
     }
 
+    function loadMore() {
+      displayCount += PAGE_SIZE;
+      renderGallery();
+    }
+
+    // === Edit Modal ===
+    function openEditModal(id, filename, category, subcategory) {
+      document.getElementById('editId').value = id;
+      document.getElementById('editName').value = filename;
+
+      const catSelect = document.getElementById('editCategory');
+      catSelect.innerHTML = categories.map(c => `<option value="${c.id}" ${c.id === category ? 'selected' : ''}>${c.name}</option>`).join('');
+
+      updateEditSubcategories(subcategory);
+
+      const m = document.getElementById('editModal');
+      m.classList.remove('hidden'); m.classList.add('flex');
+      setTimeout(() => { const inp = document.getElementById('editName'); inp.focus(); const dot = inp.value.lastIndexOf('.'); if (dot > 0) inp.setSelectionRange(0, dot); }, 100);
+    }
+    function closeEditModal() {
+      const m = document.getElementById('editModal');
+      m.classList.add('hidden'); m.classList.remove('flex');
+    }
+    function updateEditSubcategories(selectValue) {
+      const catId = document.getElementById('editCategory').value;
+      const cat = categories.find(c => c.id === catId);
+      const subSelect = document.getElementById('editSubcategory');
+      const wrap = document.getElementById('editSubWrap');
+
+      if (!cat || cat.subcategories.length === 0) {
+        wrap.classList.add('hidden');
+        subSelect.innerHTML = '<option value="">None</option>';
+        return;
+      }
+      wrap.classList.remove('hidden');
+      subSelect.innerHTML = `<option value="">None</option>` + cat.subcategories.map(s => `<option value="${s.id}" ${s.id === selectValue ? 'selected' : ''}>${s.name}</option>`).join('');
+    }
+    async function saveEdit() {
+      const id = document.getElementById('editId').value;
+      const newName = document.getElementById('editName').value.trim();
+      const newCategory = document.getElementById('editCategory').value;
+      const newSubcategory = document.getElementById('editSubcategory').value;
+      if (!newName) return;
+      try {
+        const res = await fetch(`/api/thumbnails/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ newName, newCategory, newSubcategory })
+        });
+        const data = await res.json();
+        if (data.success) { closeEditModal(); showToast('Updated'); reload(); }
+        else showToast(data.error, 'error');
+      } catch { showToast('Error', 'error'); }
+    }
+
+    async function deleteThumbnail(id) {
+      if (!confirm('Delete this thumbnail?')) return;
+      try {
+        const res = await fetch(`/api/thumbnails/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) { showToast('Deleted'); reload(); }
+        else showToast(data.error, 'error');
+      } catch { showToast('Error', 'error'); }
+    }
+
+    // === Filters ===
     function setMainFilter(cat) {
       activeCat = cat;
       activeSub = 'all';
+      displayCount = PAGE_SIZE;
       buildSubFilter();
-      renderGallery(getFiltered());
+      renderGallery();
       document.querySelectorAll('#mainFilter button').forEach(btn => {
         btn.className = btn.dataset.cat === cat
           ? 'px-4 py-2 rounded-lg text-sm font-medium bg-slate-800 text-white'
           : 'px-4 py-2 rounded-lg text-sm font-medium bg-white text-slate-600 hover:bg-slate-100 border border-slate-200';
       });
     }
-
     function setSubFilter(sub) {
       activeSub = sub;
-      renderGallery(getFiltered());
+      displayCount = PAGE_SIZE;
+      renderGallery();
       document.querySelectorAll('#subFilter button').forEach(btn => {
         btn.className = btn.dataset.sub === sub
           ? 'px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500 text-white'
           : 'px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200';
       });
     }
-
     function buildMainFilter() {
       const bar = document.getElementById('mainFilter');
       const counts = { all: allThumbnails.length };
       allThumbnails.forEach(t => { counts[t.category] = (counts[t.category] || 0) + 1; });
-
       let html = `<button data-cat="all" onclick="setMainFilter('all')" class="px-4 py-2 rounded-lg text-sm font-medium bg-slate-800 text-white">All (${counts.all})</button>`;
       categories.forEach(cat => {
         const count = counts[cat.id] || 0;
@@ -182,17 +315,14 @@
       });
       bar.innerHTML = html;
     }
-
     function buildSubFilter() {
       const bar = document.getElementById('subFilter');
       if (activeCat === 'all') { bar.innerHTML = ''; return; }
       const cat = categories.find(c => c.id === activeCat);
       if (!cat || cat.subcategories.length === 0) { bar.innerHTML = ''; return; }
-
       const filtered = allThumbnails.filter(t => t.category === activeCat);
       const counts = { all: filtered.length };
       filtered.forEach(t => { if (t.subcategory) counts[t.subcategory] = (counts[t.subcategory] || 0) + 1; });
-
       let html = `<button data-sub="all" onclick="setSubFilter('all')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500 text-white">All (${counts.all})</button>`;
       cat.subcategories.forEach(sub => {
         const count = counts[sub.id] || 0;
@@ -201,19 +331,31 @@
       bar.innerHTML = html;
     }
 
+    // === Init ===
+    async function reload() {
+      try {
+        const [catRes, thumbRes] = await Promise.all([fetch('/api/categories'), fetch('/api/thumbnails')]);
+        const catData = await catRes.json();
+        const thumbData = await thumbRes.json();
+        if (catData.success) categories = catData.categories;
+        if (thumbData.success) allThumbnails = thumbData.thumbnails;
+        buildMainFilter();
+        buildSubFilter();
+        renderGallery();
+      } catch (err) { console.error('Reload error:', err); }
+    }
+
     async function init() {
       try {
         const [catRes, thumbRes] = await Promise.all([fetch('/api/categories'), fetch('/api/thumbnails')]);
         const catData = await catRes.json();
         const thumbData = await thumbRes.json();
-
         document.getElementById('loading').classList.add('hidden');
         if (catData.success) categories = catData.categories;
         if (thumbData.success) allThumbnails = thumbData.thumbnails;
-
         buildMainFilter();
         buildSubFilter();
-        renderGallery(allThumbnails);
+        renderGallery();
       } catch (err) {
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('empty').classList.remove('hidden');

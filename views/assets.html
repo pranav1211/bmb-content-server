@@ -29,13 +29,31 @@
     </div>
   </div>
 
+  <!-- Modal backdrop -->
+  <div id="modal" class="fixed inset-0 bg-black/50 z-40 hidden items-center justify-center p-4" onclick="closeModal()">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6" onclick="event.stopPropagation()">
+      <h3 id="modalTitle" class="text-lg font-semibold text-slate-900 mb-4"></h3>
+      <div id="modalBody"></div>
+      <div id="modalFooter" class="flex justify-end gap-2 mt-6"></div>
+    </div>
+  </div>
+
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <div class="flex justify-between items-center mb-6">
       <div>
         <h1 class="text-3xl font-bold text-slate-900">Assets</h1>
         <p class="text-slate-500 mt-1" id="countText">Loading...</p>
       </div>
+      <div class="flex gap-2">
+        <button onclick="showNewFolderModal()" class="bg-slate-700 hover:bg-slate-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+          New Folder
+        </button>
+      </div>
     </div>
+
+    <!-- Breadcrumb -->
+    <div id="breadcrumb" class="mb-4 flex items-center gap-1 text-sm"></div>
 
     <!-- Upload -->
     <div class="bg-white rounded-2xl shadow-sm p-6 mb-8">
@@ -73,16 +91,18 @@
     <!-- Empty -->
     <div id="empty" class="hidden text-center py-24">
       <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-      <h3 class="text-lg font-semibold text-slate-700 mb-2">No assets yet</h3>
-      <p class="text-slate-500">Upload files to get started.</p>
+      <h3 class="text-lg font-semibold text-slate-700 mb-2">This folder is empty</h3>
+      <p class="text-slate-500">Upload files or create a subfolder.</p>
     </div>
 
-    <!-- Assets List -->
-    <div id="assetsList" class="hidden space-y-3"></div>
+    <!-- Content list (folders + files) -->
+    <div id="contentList" class="hidden space-y-2"></div>
   </main>
 
   <script>
+    let currentFolder = '';
     let allAssets = [];
+    let folders = [];
     let activeType = 'all';
     let toastTimer;
 
@@ -102,43 +122,190 @@
       toastTimer = setTimeout(() => { document.getElementById('toast').style.transform = 'translateX(120%)'; }, 2500);
     }
 
+    function showModal(title, bodyHtml, footerHtml) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').innerHTML = bodyHtml;
+      document.getElementById('modalFooter').innerHTML = footerHtml;
+      const m = document.getElementById('modal');
+      m.classList.remove('hidden'); m.classList.add('flex');
+    }
+    function closeModal() {
+      const m = document.getElementById('modal');
+      m.classList.add('hidden'); m.classList.remove('flex');
+    }
+
     function getFileType(mime) {
+      if (!mime) return 'other';
       if (mime.startsWith('image/')) return 'image';
       if (mime.startsWith('audio/')) return 'audio';
       if (mime.startsWith('video/')) return 'video';
       if (mime === 'application/pdf' || mime.includes('document') || mime.includes('text') || mime.includes('spreadsheet') || mime.includes('presentation')) return 'document';
       return 'other';
     }
-
     function getFileIcon(mime) {
-      const type = getFileType(mime);
       const icons = { image: '\uD83D\uDDBC\uFE0F', audio: '\uD83C\uDFB5', video: '\uD83C\uDFA5', document: '\uD83D\uDCC4', other: '\uD83D\uDCC1' };
-      return icons[type];
+      return icons[getFileType(mime)];
     }
-
     function formatSize(b) {
       if (b < 1024) return b + ' B';
       if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
       return (b / 1048576).toFixed(1) + ' MB';
     }
 
-    async function copyUrl(path) {
-      const url = window.location.origin + path;
+    async function copyUrl(p) {
+      const url = window.location.origin + p;
       try { await navigator.clipboard.writeText(url); }
       catch { const ta = document.createElement('textarea'); ta.value = url; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
       showToast('URL copied!');
     }
 
-    async function deleteAsset(id) {
-      if (!confirm('Delete this asset?')) return;
+    // === Breadcrumb ===
+    function renderBreadcrumb() {
+      const bc = document.getElementById('breadcrumb');
+      const parts = currentFolder ? currentFolder.split('/') : [];
+      let html = `<button onclick="navigateTo('')" class="text-blue-600 hover:text-blue-700 font-medium">Root</button>`;
+      let built = '';
+      parts.forEach((p, i) => {
+        built += (i > 0 ? '/' : '') + p;
+        const fp = built;
+        html += `<span class="text-slate-400">/</span>`;
+        if (i === parts.length - 1) html += `<span class="text-slate-700 font-medium">${p}</span>`;
+        else html += `<button onclick="navigateTo('${fp}')" class="text-blue-600 hover:text-blue-700 font-medium">${p}</button>`;
+      });
+      bc.innerHTML = html;
+    }
+
+    function navigateTo(folder) {
+      currentFolder = folder;
+      activeType = 'all';
+      loadContent();
+    }
+
+    // === Folder operations ===
+    function showNewFolderModal() {
+      showModal('New Folder',
+        `<input id="newFolderName" type="text" placeholder="Folder name" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" autofocus>`,
+        `<button onclick="closeModal()" class="px-4 py-2 text-sm text-slate-600 hover:text-slate-800">Cancel</button>
+         <button onclick="createFolder()" class="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Create</button>`
+      );
+      setTimeout(() => document.getElementById('newFolderName')?.focus(), 100);
+    }
+    async function createFolder() {
+      const name = document.getElementById('newFolderName')?.value?.trim();
+      if (!name) return;
       try {
-        const res = await fetch(`/api/assets/${id}`, { method: 'DELETE' });
+        const res = await fetch('/api/assets/folders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, parent: currentFolder }) });
         const data = await res.json();
-        if (data.success) { showToast('Deleted'); loadAssets(); }
+        if (data.success) { closeModal(); showToast('Folder created'); loadContent(); }
         else showToast(data.error, 'error');
       } catch { showToast('Error', 'error'); }
     }
 
+    function showRenameFolderModal(folderPath) {
+      const name = folderPath.split('/').pop();
+      showModal('Rename Folder',
+        `<input id="renameFolderInput" type="text" value="${name}" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">`,
+        `<button onclick="closeModal()" class="px-4 py-2 text-sm text-slate-600">Cancel</button>
+         <button onclick="renameFolder('${folderPath}')" class="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Rename</button>`
+      );
+      setTimeout(() => { const inp = document.getElementById('renameFolderInput'); inp?.focus(); inp?.select(); }, 100);
+    }
+    async function renameFolder(oldPath) {
+      const newName = document.getElementById('renameFolderInput')?.value?.trim();
+      if (!newName) return;
+      try {
+        const res = await fetch('/api/assets/folders/rename', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ oldPath, newName }) });
+        const data = await res.json();
+        if (data.success) { closeModal(); showToast('Folder renamed'); if (currentFolder === oldPath) currentFolder = data.newPath; loadContent(); }
+        else showToast(data.error, 'error');
+      } catch { showToast('Error', 'error'); }
+    }
+
+    async function deleteFolder(folderPath) {
+      if (!confirm(`Delete folder "${folderPath.split('/').pop()}" and all its contents?`)) return;
+      try {
+        const res = await fetch('/api/assets/folders', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folderPath }) });
+        const data = await res.json();
+        if (data.success) { showToast('Folder deleted'); if (currentFolder.startsWith(folderPath)) currentFolder = ''; loadContent(); }
+        else showToast(data.error, 'error');
+      } catch { showToast('Error', 'error'); }
+    }
+
+    // === File operations ===
+    function showRenameModal(asset) {
+      showModal('Rename File',
+        `<input id="renameInput" type="text" value="${asset.filename}" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">`,
+        `<button onclick="closeModal()" class="px-4 py-2 text-sm text-slate-600">Cancel</button>
+         <button onclick="renameAsset('${asset.id}')" class="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Rename</button>`
+      );
+      setTimeout(() => { const inp = document.getElementById('renameInput'); inp?.focus(); const dot = inp.value.lastIndexOf('.'); if (dot > 0) inp.setSelectionRange(0, dot); }, 100);
+    }
+    async function renameAsset(id) {
+      const newName = document.getElementById('renameInput')?.value?.trim();
+      if (!newName) return;
+      try {
+        const res = await fetch(`/api/assets/${id}/rename`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newName }) });
+        const data = await res.json();
+        if (data.success) { closeModal(); showToast('Renamed'); loadContent(); }
+        else showToast(data.error, 'error');
+      } catch { showToast('Error', 'error'); }
+    }
+
+    function showMoveModal(asset) {
+      // Build folder select - need to fetch all folders
+      fetch('/api/assets/folders?parent=').then(r => r.json()).then(data => {
+        // We need ALL folders recursively, but the API gives children of a parent.
+        // For simplicity, list all known folders from allAssets + current folder tree.
+        fetchAllFolders().then(allFolders => {
+          let options = `<option value="">Root</option>`;
+          allFolders.sort().forEach(f => {
+            const selected = f === asset.folder ? 'selected' : '';
+            options += `<option value="${f}" ${selected}>${f}</option>`;
+          });
+          showModal('Move File',
+            `<p class="text-sm text-slate-500 mb-3">Moving: ${asset.filename}</p>
+             <select id="moveTarget" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">${options}</select>`,
+            `<button onclick="closeModal()" class="px-4 py-2 text-sm text-slate-600">Cancel</button>
+             <button onclick="moveAsset('${asset.id}')" class="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Move</button>`
+          );
+        });
+      });
+    }
+    async function fetchAllFolders() {
+      // Recursively get all folders
+      const all = new Set();
+      async function scan(parent) {
+        const res = await fetch(`/api/assets/folders?parent=${encodeURIComponent(parent)}`);
+        const data = await res.json();
+        for (const f of (data.folders || [])) {
+          all.add(f);
+          await scan(f);
+        }
+      }
+      await scan('');
+      return [...all];
+    }
+    async function moveAsset(id) {
+      const targetFolder = document.getElementById('moveTarget')?.value || '';
+      try {
+        const res = await fetch(`/api/assets/${id}/move`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ targetFolder }) });
+        const data = await res.json();
+        if (data.success) { closeModal(); showToast('Moved'); loadContent(); }
+        else showToast(data.error, 'error');
+      } catch { showToast('Error', 'error'); }
+    }
+
+    async function deleteAsset(id) {
+      if (!confirm('Delete this file?')) return;
+      try {
+        const res = await fetch(`/api/assets/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) { showToast('Deleted'); loadContent(); }
+        else showToast(data.error, 'error');
+      } catch { showToast('Error', 'error'); }
+    }
+
+    // === Rendering ===
     function getFiltered() {
       if (activeType === 'all') return allAssets;
       return allAssets.filter(a => getFileType(a.mimeType) === activeType);
@@ -146,63 +313,102 @@
 
     function renderFilter() {
       const bar = document.getElementById('filterBar');
+      if (allAssets.length === 0) { bar.innerHTML = ''; return; }
       const types = ['all', 'image', 'document', 'audio', 'video', 'other'];
       const labels = { all: 'All', image: 'Images', document: 'Documents', audio: 'Audio', video: 'Video', other: 'Other' };
       const counts = { all: allAssets.length };
       allAssets.forEach(a => { const t = getFileType(a.mimeType); counts[t] = (counts[t] || 0) + 1; });
-
       bar.innerHTML = types.filter(t => t === 'all' || counts[t]).map(t => {
         const active = t === activeType;
         return `<button onclick="setFilter('${t}')" class="px-4 py-2 rounded-lg text-sm font-medium ${active ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">${labels[t]} (${counts[t] || 0})</button>`;
       }).join('');
     }
+    function setFilter(type) { activeType = type; renderFilter(); renderContent(); }
 
-    function setFilter(type) {
-      activeType = type;
-      renderFilter();
-      renderAssets(getFiltered());
-    }
-
-    function renderAssets(assets) {
-      const list = document.getElementById('assetsList');
+    function renderContent() {
+      const list = document.getElementById('contentList');
       const empty = document.getElementById('empty');
       const countText = document.getElementById('countText');
+      const filtered = getFiltered();
 
-      if (assets.length === 0) {
+      const hasFolders = folders.length > 0;
+      const hasFiles = filtered.length > 0;
+
+      if (!hasFolders && !hasFiles) {
         list.classList.add('hidden'); empty.classList.remove('hidden');
-        countText.textContent = '0 assets'; return;
+        countText.textContent = currentFolder ? 'Empty folder' : '0 assets'; return;
       }
 
       empty.classList.add('hidden'); list.classList.remove('hidden');
-      countText.textContent = `${assets.length} asset${assets.length === 1 ? '' : 's'}`;
+      const totalCount = allAssets.length + folders.length;
+      countText.textContent = `${folders.length ? folders.length + ' folder' + (folders.length === 1 ? '' : 's') + ', ' : ''}${allAssets.length} file${allAssets.length === 1 ? '' : 's'}`;
 
-      list.innerHTML = assets.map(a => {
-        const isImage = a.mimeType.startsWith('image/');
-        const date = new Date(a.uploadDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        return `
-        <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex">
-          ${isImage ? `<div class="w-20 h-20 flex-shrink-0 bg-slate-100"><img src="${a.path}" class="w-full h-full object-cover" alt="${a.originalName}" onerror="this.parentElement.innerHTML='<div class=\\'flex items-center justify-center w-full h-full text-2xl\\'>${getFileIcon(a.mimeType)}</div>'"></div>`
-          : `<div class="w-20 h-20 flex-shrink-0 bg-slate-100 flex items-center justify-center text-3xl">${getFileIcon(a.mimeType)}</div>`}
-          <div class="flex-1 flex items-center justify-between p-4 min-w-0">
-            <div class="min-w-0 flex-1">
-              <p class="text-sm font-medium text-slate-800 truncate" title="${a.originalName}">${a.originalName}</p>
-              <p class="text-xs text-slate-400 mt-0.5">${formatSize(a.fileSize)} &middot; ${date}</p>
+      let html = '';
+
+      // Folders first
+      folders.forEach(f => {
+        const name = f.split('/').pop();
+        html += `
+        <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex cursor-pointer" ondblclick="navigateTo('${f}')">
+          <div class="w-16 h-16 flex-shrink-0 bg-amber-50 flex items-center justify-center text-2xl" onclick="navigateTo('${f}')">
+            \uD83D\uDCC2
+          </div>
+          <div class="flex-1 flex items-center justify-between p-3 min-w-0">
+            <div class="min-w-0 flex-1 cursor-pointer" onclick="navigateTo('${f}')">
+              <p class="text-sm font-semibold text-slate-800">${name}</p>
+              <p class="text-xs text-slate-400">Folder</p>
             </div>
-            <div class="flex items-center gap-2 ml-4 flex-shrink-0">
-              <button onclick="copyUrl('${a.path}')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
-                Copy URL
+            <div class="flex items-center gap-1 ml-3 flex-shrink-0">
+              <button onclick="event.stopPropagation(); showRenameFolderModal('${f}')" class="text-slate-400 hover:text-blue-500 p-1.5 transition-colors" title="Rename">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
               </button>
-              <button onclick="deleteAsset('${a.id}')" class="text-slate-400 hover:text-red-500 p-2 transition-colors" title="Delete">
+              <button onclick="event.stopPropagation(); deleteFolder('${f}')" class="text-slate-400 hover:text-red-500 p-1.5 transition-colors" title="Delete">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
               </button>
             </div>
           </div>
         </div>`;
-      }).join('');
+      });
+
+      // Files
+      filtered.forEach(a => {
+        const isImage = a.mimeType.startsWith('image/');
+        const date = new Date(a.uploadDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const escapedAsset = encodeURIComponent(JSON.stringify({ id: a.id, filename: a.filename, folder: a.folder || '' }));
+        html += `
+        <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex">
+          ${isImage ? `<div class="w-16 h-16 flex-shrink-0 bg-slate-100"><img src="${a.path}" class="w-full h-full object-cover" alt="${a.filename}" onerror="this.parentElement.innerHTML='<div class=\\'flex items-center justify-center w-full h-full text-xl\\'>${getFileIcon(a.mimeType)}</div>'"></div>`
+          : `<div class="w-16 h-16 flex-shrink-0 bg-slate-100 flex items-center justify-center text-2xl">${getFileIcon(a.mimeType)}</div>`}
+          <div class="flex-1 flex items-center justify-between p-3 min-w-0">
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-slate-800 truncate" title="${a.filename}">${a.filename}</p>
+              <p class="text-xs text-slate-400 mt-0.5">${formatSize(a.fileSize)} &middot; ${date}</p>
+            </div>
+            <div class="flex items-center gap-1 ml-3 flex-shrink-0">
+              <a href="${a.path}" target="_blank" class="text-slate-400 hover:text-emerald-500 p-1.5 transition-colors" title="View">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              </a>
+              <button onclick="copyUrl('${a.path}')" class="text-slate-400 hover:text-blue-500 p-1.5 transition-colors" title="Copy URL">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+              </button>
+              <button onclick="showRenameModal(JSON.parse(decodeURIComponent('${escapedAsset}')))" class="text-slate-400 hover:text-amber-500 p-1.5 transition-colors" title="Rename">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+              <button onclick="showMoveModal(JSON.parse(decodeURIComponent('${escapedAsset}')))" class="text-slate-400 hover:text-purple-500 p-1.5 transition-colors" title="Move">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+              </button>
+              <button onclick="deleteAsset('${a.id}')" class="text-slate-400 hover:text-red-500 p-1.5 transition-colors" title="Delete">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>`;
+      });
+
+      list.innerHTML = html;
     }
 
-    // Drop zone
+    // === Drop zone ===
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
     dropZone.addEventListener('click', () => fileInput.click());
@@ -210,19 +416,13 @@
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-blue-400', 'bg-blue-50'));
     dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('border-blue-400', 'bg-blue-50'); if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; showFilePreview(e.dataTransfer.files[0]); }});
     fileInput.addEventListener('change', () => { if (fileInput.files.length) showFilePreview(fileInput.files[0]); });
-
     function showFilePreview(file) {
       document.getElementById('fileIcon').textContent = getFileIcon(file.type);
       document.getElementById('fileName').textContent = file.name;
       document.getElementById('fileSize').textContent = formatSize(file.size);
       document.getElementById('filePreview').classList.remove('hidden');
     }
-
-    document.getElementById('clearBtn').addEventListener('click', () => {
-      fileInput.value = '';
-      document.getElementById('filePreview').classList.add('hidden');
-    });
-
+    document.getElementById('clearBtn').addEventListener('click', () => { fileInput.value = ''; document.getElementById('filePreview').classList.add('hidden'); });
     document.getElementById('uploadBtn').addEventListener('click', async () => {
       const file = fileInput.files[0];
       if (!file) return;
@@ -231,26 +431,30 @@
       try {
         const fd = new FormData();
         fd.append('file', file);
+        fd.append('folder', currentFolder);
         const res = await fetch('/api/upload/asset', { method: 'POST', body: fd });
         const data = await res.json();
-        if (data.success) {
-          showToast('File uploaded!');
-          fileInput.value = '';
-          document.getElementById('filePreview').classList.add('hidden');
-          loadAssets();
-        } else showToast(data.error, 'error');
+        if (data.success) { showToast('File uploaded!'); fileInput.value = ''; document.getElementById('filePreview').classList.add('hidden'); loadContent(); }
+        else showToast(data.error, 'error');
       } catch { showToast('Connection error', 'error'); }
       finally { btn.disabled = false; btn.textContent = 'Upload'; }
     });
 
-    async function loadAssets() {
+    // === Load ===
+    async function loadContent() {
+      renderBreadcrumb();
       try {
-        const res = await fetch('/api/assets');
-        const data = await res.json();
+        const [assetsRes, foldersRes] = await Promise.all([
+          fetch(`/api/assets?folder=${encodeURIComponent(currentFolder)}`),
+          fetch(`/api/assets/folders?parent=${encodeURIComponent(currentFolder)}`)
+        ]);
+        const assetsData = await assetsRes.json();
+        const foldersData = await foldersRes.json();
         document.getElementById('loading').classList.add('hidden');
-        if (data.success) allAssets = data.assets;
+        allAssets = assetsData.success ? assetsData.assets : [];
+        folders = foldersData.success ? foldersData.folders : [];
         renderFilter();
-        renderAssets(getFiltered());
+        renderContent();
       } catch {
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('empty').classList.remove('hidden');
@@ -258,7 +462,7 @@
       }
     }
 
-    loadAssets();
+    loadContent();
   </script>
 </body>
 </html>
