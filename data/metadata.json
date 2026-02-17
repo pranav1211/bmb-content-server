@@ -20,15 +20,7 @@
   ],
   "assets": [
     {
-      "id": "d8987f",
-      "filename": "favicon.ico",
-      "originalName": "favicon.ico",
-      "path": "/assets/favicon.ico",
-      "fileSize": 103771,
-      "mimeType": "image/x-icon",
-      "uploadDate": "2026-02-17T09:18:56.181Z"
-    },
-    {
+      "folder": "",
       "id": "5a3fba",
       "filename": "fboo.mp4",
       "originalName": "fboo.mp4",
@@ -36,6 +28,16 @@
       "fileSize": 1098735,
       "mimeType": "video/mp4",
       "uploadDate": "2026-02-17T09:19:13.982Z"
+    },
+    {
+      "folder": "",
+      "id": "e4d983",
+      "filename": "favicon-1.ico",
+      "originalName": "favicon.ico",
+      "path": "/assets/favicon-1.ico",
+      "fileSize": 103771,
+      "mimeType": "image/x-icon",
+      "uploadDate": "2026-02-17T12:45:47.640Z"
     }
   ]
 }
