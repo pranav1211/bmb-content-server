@@ -44,13 +44,17 @@ app.get('/thumb/:width/*imgPath', (req, res) => {
   if (!ALLOWED_WIDTHS.includes(width)) return res.status(400).send('Invalid width');
 
   const imgPath = Array.isArray(req.params.imgPath) ? req.params.imgPath.join('/') : req.params.imgPath;
-  const srcFile = path.resolve(thumbDir, imgPath);
-  if (!srcFile.startsWith(thumbDir) || !fs.existsSync(srcFile)) return res.status(404).send('Not found');
+  const srcFile = path.join(thumbDir, imgPath);
+  const normalizedSrc = path.resolve(srcFile);
+  const normalizedThumb = path.resolve(thumbDir);
+  if (!normalizedSrc.startsWith(normalizedThumb + path.sep) || !fs.existsSync(normalizedSrc)) {
+    return res.redirect(`/thumbnails/${imgPath}`);
+  }
 
   const cacheKey = `${width}-${imgPath.replace(/[/\\]/g, '_')}`;
   const cachePath = path.join(thumbCacheDir, cacheKey);
 
-  const ext = path.extname(srcFile).slice(1) || 'webp';
+  const ext = path.extname(normalizedSrc).slice(1) || 'webp';
 
   if (fs.existsSync(cachePath)) {
     res.set('Cache-Control', 'public, max-age=31536000, immutable');
@@ -58,7 +62,7 @@ app.get('/thumb/:width/*imgPath', (req, res) => {
     return fs.createReadStream(cachePath).pipe(res);
   }
 
-  sharp(srcFile)
+  sharp(normalizedSrc)
     .resize(width, null, { withoutEnlargement: true })
     .toFile(cachePath)
     .then(() => {
@@ -66,7 +70,7 @@ app.get('/thumb/:width/*imgPath', (req, res) => {
       res.type(ext);
       fs.createReadStream(cachePath).pipe(res);
     })
-    .catch(() => res.status(500).send('Resize failed'));
+    .catch(() => res.redirect(`/thumbnails/${imgPath}`));
 });
 
 // Static file serving
