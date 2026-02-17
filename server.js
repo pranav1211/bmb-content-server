@@ -3,6 +3,7 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const fs = require('fs');
+const sharp = require('sharp');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,7 +15,8 @@ const { requireAuth } = require('./routes/auth');
 app.set('trust proxy', 1);
 
 // ===== ENSURE DIRECTORIES =====
-[dataDir, thumbDir, assetsDir, path.join(__dirname, 'uploads', 'posts')].forEach(dir => {
+const thumbCacheDir = path.join(__dirname, '.thumb-cache');
+[dataDir, thumbDir, assetsDir, thumbCacheDir, path.join(__dirname, 'uploads', 'posts')].forEach(dir => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 if (!fs.existsSync(metadataPath)) {
@@ -35,8 +37,38 @@ app.use(session({
   }
 }));
 
+// ===== RESIZED THUMBNAIL ENDPOINT =====
+const ALLOWED_WIDTHS = [320, 480, 640];
+app.get('/thumb/:width/*', (req, res) => {
+  const width = parseInt(req.params.width);
+  if (!ALLOWED_WIDTHS.includes(width)) return res.status(400).send('Invalid width');
+
+  const imgPath = req.params[0];
+  const srcFile = path.resolve(thumbDir, imgPath);
+  if (!srcFile.startsWith(thumbDir) || !fs.existsSync(srcFile)) return res.status(404).send('Not found');
+
+  const cacheKey = `${width}-${imgPath.replace(/[/\\]/g, '_')}`;
+  const cachePath = path.join(thumbCacheDir, cacheKey);
+
+  if (fs.existsSync(cachePath)) {
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    res.type(path.extname(srcFile) || 'webp');
+    return res.sendFile(cachePath);
+  }
+
+  sharp(srcFile)
+    .resize(width, null, { withoutEnlargement: true })
+    .toFile(cachePath)
+    .then(() => {
+      res.set('Cache-Control', 'public, max-age=31536000, immutable');
+      res.type(path.extname(srcFile) || 'webp');
+      res.sendFile(cachePath);
+    })
+    .catch(() => res.status(500).send('Resize failed'));
+});
+
 // Static file serving
-app.use('/thumbnails', express.static(thumbDir));
+app.use('/thumbnails', express.static(thumbDir, { maxAge: '7d' }));
 app.use('/assets', express.static(assetsDir, { index: false }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
