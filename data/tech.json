@@ -1,0 +1,26 @@
+{
+  "name": "Tech",
+  "subcategories": [],
+  "thumbnails": [
+    {
+      "id": "5cda7e",
+      "filename": "migrated-143-tech2.png",
+      "originalName": "tech2.png",
+      "path": "/uploads/thumbnails/migrated-143-tech2.png",
+      "fileSize": 77835,
+      "mimeType": "image/png",
+      "subcategory": "",
+      "uploadDate": "2025-08-29T17:54:09.991Z"
+    },
+    {
+      "id": "55a6db",
+      "filename": "migrated-142-tech1.png",
+      "originalName": "tech1.png",
+      "path": "/uploads/thumbnails/migrated-142-tech1.png",
+      "fileSize": 67352,
+      "mimeType": "image/png",
+      "subcategory": "",
+      "uploadDate": "2025-07-17T14:01:44.439Z"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
@@ -18,7 +18,7 @@ async function setup() {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // Generate session secret
-  const sessionSecret = uuidv4() + '-' + uuidv4();
+  const sessionSecret = crypto.randomUUID() + '-' + crypto.randomUUID();
 
   // Get port
   const port = await ask('Enter port (default: 3000): ') || '3000';

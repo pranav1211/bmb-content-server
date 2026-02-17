@@ -7,7 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 min-h-screen">
-  <!-- Navigation -->
   <nav class="bg-slate-900 text-white shadow-lg">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
@@ -22,7 +21,7 @@
     </div>
   </nav>
 
-  <!-- Toast Notification -->
+  <!-- Toast -->
   <div id="toast" class="fixed top-4 right-4 z-50 transform translate-x-[120%] transition-transform duration-300">
     <div id="toastContent" class="px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 min-w-[300px]">
       <span id="toastIcon" class="text-xl"></span>
@@ -30,46 +29,80 @@
     </div>
   </div>
 
-  <!-- Main Content -->
-  <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <h1 class="text-3xl font-bold text-slate-900 mb-8">Upload Content</h1>
+  <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+
+    <!-- ===== CATEGORY MANAGEMENT ===== -->
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-semibold text-slate-900">Categories</h2>
+        <button onclick="toggleAddMain()" class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">+ Add Category</button>
+      </div>
+
+      <!-- Add Main Category Form -->
+      <div id="addMainForm" class="hidden mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+        <p class="text-sm font-medium text-blue-800 mb-3">New Main Category</p>
+        <div class="flex gap-3">
+          <input type="text" id="newMainId" placeholder="ID (e.g. anime)" class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+          <input type="text" id="newMainName" placeholder="Display name" class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+          <button onclick="addMainCategory()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">Save</button>
+          <button onclick="toggleAddMain()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm transition-colors">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Category Tree -->
+      <div id="categoryTree" class="space-y-3">
+        <p class="text-slate-400 text-sm">Loading...</p>
+      </div>
+    </div>
+
+    <!-- ===== UPLOAD SECTION ===== -->
+    <h1 class="text-3xl font-bold text-slate-900">Upload Content</h1>
 
     <!-- Type Selector -->
-    <div class="bg-white rounded-2xl shadow-sm p-6 mb-8">
+    <div class="bg-white rounded-2xl shadow-sm p-6">
       <label class="block text-sm font-medium text-slate-700 mb-4">Upload Type</label>
       <div class="flex gap-4">
-        <label class="flex-1 cursor-pointer" id="thumbRadioLabel">
+        <label class="flex-1 cursor-pointer">
           <input type="radio" name="uploadType" value="thumbnail" checked class="hidden" id="thumbRadio">
           <div class="border-2 rounded-xl p-4 text-center transition-all border-blue-600 bg-blue-50" id="thumbCard">
-            <svg class="w-8 h-8 mx-auto mb-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-            </svg>
+            <svg class="w-8 h-8 mx-auto mb-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <span class="font-medium text-slate-700">Thumbnail</span>
           </div>
         </label>
-        <label class="flex-1 cursor-pointer" id="postRadioLabel">
+        <label class="flex-1 cursor-pointer">
           <input type="radio" name="uploadType" value="post" class="hidden" id="postRadio">
           <div class="border-2 rounded-xl p-4 text-center transition-all border-slate-200" id="postCard">
-            <svg class="w-8 h-8 mx-auto mb-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
-            </svg>
+            <svg class="w-8 h-8 mx-auto mb-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
             <span class="font-medium text-slate-700">Blog Post</span>
           </div>
         </label>
       </div>
     </div>
 
-    <!-- Thumbnail Upload Form -->
+    <!-- Thumbnail Upload -->
     <div id="thumbnailForm" class="bg-white rounded-2xl shadow-sm p-6">
       <h2 class="text-xl font-semibold text-slate-900 mb-6">Upload Thumbnail</h2>
       <form id="thumbForm" class="space-y-6">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Category</label>
+            <select id="thumbCategory" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+              <option value="">Select category...</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Subcategory</label>
+            <select id="thumbSubcategory" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white" disabled>
+              <option value="">None</option>
+            </select>
+          </div>
+        </div>
+
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-2">Image File</label>
           <div id="thumbDropZone" class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-blue-400 transition-colors cursor-pointer">
-            <svg class="w-12 h-12 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-            </svg>
-            <p class="text-slate-600 mb-2">Click or drag & drop to upload</p>
+            <svg class="w-12 h-12 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            <p class="text-slate-600 mb-2">Click or drag & drop</p>
             <p class="text-sm text-slate-400">JPG, PNG, or WebP (max 10MB)</p>
             <input type="file" id="thumbFile" accept=".jpg,.jpeg,.png,.webp" class="hidden">
           </div>
@@ -79,322 +112,345 @@
             <button type="button" id="thumbClear" class="text-sm text-red-500 hover:text-red-600 mt-1">Remove</button>
           </div>
         </div>
-        <button type="submit" id="thumbSubmit" class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center">
+        <button type="submit" id="thumbSubmit" class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center">
           <span id="thumbBtnText">Upload Thumbnail</span>
-          <svg id="thumbSpinner" class="hidden animate-spin ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
+          <svg id="thumbSpinner" class="hidden animate-spin ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
         </button>
       </form>
     </div>
 
-    <!-- Blog Post Upload Form -->
+    <!-- Blog Post Upload -->
     <div id="postForm" class="bg-white rounded-2xl shadow-sm p-6 hidden">
       <h2 class="text-xl font-semibold text-slate-900 mb-6">Upload Blog Post</h2>
       <form id="blogForm" class="space-y-6">
         <div>
           <label for="postTitle" class="block text-sm font-medium text-slate-700 mb-2">Post Title</label>
-          <input type="text" id="postTitle" required class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="Enter post title">
+          <input type="text" id="postTitle" required class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Enter post title">
           <p id="slugPreview" class="text-sm text-slate-400 mt-1"></p>
         </div>
-
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-2">HTML Content File</label>
           <div id="htmlDropZone" class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors cursor-pointer">
-            <svg class="w-10 h-10 mx-auto text-slate-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
+            <svg class="w-10 h-10 mx-auto text-slate-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             <p class="text-slate-600">Click or drag to upload HTML file</p>
             <input type="file" id="htmlFile" accept=".html,.htm" class="hidden">
           </div>
           <p id="htmlFileName" class="text-sm text-slate-500 mt-2 hidden"></p>
         </div>
-
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-2">Images (optional)</label>
           <div id="imgDropZone" class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors cursor-pointer">
-            <svg class="w-10 h-10 mx-auto text-slate-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-            </svg>
+            <svg class="w-10 h-10 mx-auto text-slate-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <p class="text-slate-600">Click or drag to upload images</p>
-            <p class="text-sm text-slate-400">Multiple files allowed - JPG, PNG, WebP</p>
+            <p class="text-sm text-slate-400">Multiple files - JPG, PNG, WebP</p>
             <input type="file" id="postImages" accept=".jpg,.jpeg,.png,.webp" multiple class="hidden">
           </div>
           <div id="imagePreviewGrid" class="grid grid-cols-4 gap-3 mt-4 hidden"></div>
         </div>
-
-        <button type="submit" id="postSubmit" class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center">
+        <button type="submit" id="postSubmit" class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center">
           <span id="postBtnText">Upload Post</span>
-          <svg id="postSpinner" class="hidden animate-spin ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
+          <svg id="postSpinner" class="hidden animate-spin ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
         </button>
       </form>
     </div>
   </main>
 
   <script>
-    // ===== Toast System =====
+    let categories = [];
+    let toastTimeout;
+
     function showToast(message, type = 'success') {
+      clearTimeout(toastTimeout);
       const toast = document.getElementById('toast');
       const content = document.getElementById('toastContent');
       const icon = document.getElementById('toastIcon');
-      const msg = document.getElementById('toastMessage');
-
-      msg.textContent = message;
-
+      document.getElementById('toastMessage').textContent = message;
       if (type === 'success') {
         content.className = 'px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 min-w-[300px] bg-emerald-50 border border-emerald-200';
-        icon.textContent = '\u2713';
-        icon.className = 'text-xl text-emerald-600 font-bold';
+        icon.textContent = '\u2713'; icon.className = 'text-xl text-emerald-600 font-bold';
       } else {
         content.className = 'px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 min-w-[300px] bg-red-50 border border-red-200';
-        icon.textContent = '\u2717';
-        icon.className = 'text-xl text-red-600 font-bold';
+        icon.textContent = '\u2717'; icon.className = 'text-xl text-red-600 font-bold';
       }
-
       toast.style.transform = 'translateX(0)';
-      setTimeout(() => {
-        toast.style.transform = 'translateX(120%)';
-      }, 3000);
+      toastTimeout = setTimeout(() => { toast.style.transform = 'translateX(120%)'; }, 3000);
     }
 
-    // ===== Type Selector =====
+    // ===== CATEGORIES =====
+
+    async function loadCategories() {
+      try {
+        const res = await fetch('/api/categories');
+        const data = await res.json();
+        if (data.success) { categories = data.categories; renderCategoryTree(); populateDropdowns(); }
+      } catch (err) { console.error('Failed to load categories:', err); }
+    }
+
+    function renderCategoryTree() {
+      const tree = document.getElementById('categoryTree');
+      if (categories.length === 0) { tree.innerHTML = '<p class="text-slate-400 text-sm">No categories yet.</p>'; return; }
+
+      tree.innerHTML = categories.map(cat => {
+        const subItems = cat.subcategories.map(sub => `
+          <div class="flex items-center justify-between p-2.5 bg-amber-50 border border-amber-200 rounded-lg ml-6">
+            <div class="flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+              <span class="sub-name text-sm text-amber-800">${sub.name}</span>
+              <span class="text-xs font-mono text-amber-400">${sub.id}</span>
+              <input type="text" class="sub-edit hidden px-2 py-1 border border-amber-300 rounded text-sm w-32" value="${sub.name}">
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button onclick="startEdit(this, 'sub')" class="edit-btn text-amber-500 hover:text-amber-700 text-xs transition-colors">Edit</button>
+              <button onclick="saveSubEdit(this, '${cat.id}', '${sub.id}')" class="save-btn hidden text-emerald-600 hover:text-emerald-700 text-xs font-medium transition-colors">Save</button>
+              <button onclick="cancelEdit(this, 'sub')" class="cancel-btn hidden text-slate-400 hover:text-slate-600 text-xs transition-colors">Cancel</button>
+              <button onclick="deleteSubcategory('${cat.id}', '${sub.id}')" class="text-amber-400 hover:text-red-500 text-xs transition-colors">Delete</button>
+            </div>
+          </div>
+        `).join('');
+
+        return `
+          <div class="rounded-xl overflow-hidden border border-slate-200">
+            <!-- Main Category Header -->
+            <div class="flex items-center justify-between p-3.5 bg-slate-800 text-white">
+              <div class="flex items-center gap-3">
+                <span class="cat-name font-semibold">${cat.name}</span>
+                <span class="text-xs font-mono text-slate-400">${cat.id}</span>
+                <span class="text-xs bg-slate-600 px-2 py-0.5 rounded-full">${cat.thumbnailCount} images</span>
+                <input type="text" class="cat-edit hidden px-2 py-1 border border-slate-500 rounded text-sm text-slate-900 w-32" value="${cat.name}">
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="startEdit(this, 'cat')" class="edit-btn text-slate-400 hover:text-white text-xs transition-colors">Edit</button>
+                <button onclick="saveCatEdit(this, '${cat.id}')" class="save-btn hidden text-emerald-400 hover:text-emerald-300 text-xs font-medium transition-colors">Save</button>
+                <button onclick="cancelEdit(this, 'cat')" class="cancel-btn hidden text-slate-400 hover:text-slate-300 text-xs transition-colors">Cancel</button>
+                <button onclick="addSubPrompt('${cat.id}')" class="text-blue-400 hover:text-blue-300 text-xs transition-colors">+ Sub</button>
+                <button onclick="deleteMainCategory('${cat.id}')" class="text-slate-500 hover:text-red-400 text-xs transition-colors">Delete</button>
+              </div>
+            </div>
+            <!-- Subcategories -->
+            ${cat.subcategories.length > 0 ? `<div class="p-3 space-y-2 bg-slate-50">${subItems}</div>` : ''}
+            <!-- Add Sub Form (hidden) -->
+            <div id="addSub-${cat.id}" class="hidden p-3 bg-amber-50 border-t border-amber-200">
+              <div class="flex gap-2 ml-6">
+                <input type="text" id="newSubId-${cat.id}" placeholder="ID" class="flex-1 px-2 py-1.5 border border-amber-300 rounded text-sm outline-none focus:ring-1 focus:ring-amber-400">
+                <input type="text" id="newSubName-${cat.id}" placeholder="Name" class="flex-1 px-2 py-1.5 border border-amber-300 rounded text-sm outline-none focus:ring-1 focus:ring-amber-400">
+                <button onclick="addSubcategory('${cat.id}')" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded text-sm transition-colors">Add</button>
+                <button onclick="document.getElementById('addSub-${cat.id}').classList.add('hidden')" class="bg-slate-200 hover:bg-slate-300 text-slate-600 px-3 py-1.5 rounded text-sm transition-colors">Cancel</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function populateDropdowns() {
+      const catSel = document.getElementById('thumbCategory');
+      const subSel = document.getElementById('thumbSubcategory');
+      const curCat = catSel.value;
+      catSel.innerHTML = '<option value="">Select category...</option>' + categories.map(c => `<option value="${c.id}"${c.id === curCat ? ' selected' : ''}>${c.name}</option>`).join('');
+      updateSubDropdown();
+    }
+
+    function updateSubDropdown() {
+      const catSel = document.getElementById('thumbCategory');
+      const subSel = document.getElementById('thumbSubcategory');
+      const cat = categories.find(c => c.id === catSel.value);
+      if (cat && cat.subcategories.length > 0) {
+        subSel.disabled = false;
+        subSel.innerHTML = '<option value="">None</option>' + cat.subcategories.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+      } else {
+        subSel.disabled = true;
+        subSel.innerHTML = '<option value="">None</option>';
+      }
+    }
+
+    document.getElementById('thumbCategory').addEventListener('change', updateSubDropdown);
+
+    function toggleAddMain() { document.getElementById('addMainForm').classList.toggle('hidden'); }
+
+    async function addMainCategory() {
+      const id = document.getElementById('newMainId').value.trim();
+      const name = document.getElementById('newMainName').value.trim();
+      if (!id || !name) { showToast('ID and name required', 'error'); return; }
+      try {
+        const res = await fetch('/api/categories', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, name }) });
+        const data = await res.json();
+        if (data.success) { showToast('Category added'); document.getElementById('newMainId').value = ''; document.getElementById('newMainName').value = ''; document.getElementById('addMainForm').classList.add('hidden'); loadCategories(); }
+        else showToast(data.error, 'error');
+      } catch { showToast('Connection error', 'error'); }
+    }
+
+    function addSubPrompt(catId) {
+      document.querySelectorAll('[id^="addSub-"]').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`addSub-${catId}`).classList.remove('hidden');
+      document.getElementById(`newSubId-${catId}`).focus();
+    }
+
+    async function addSubcategory(catId) {
+      const id = document.getElementById(`newSubId-${catId}`).value.trim();
+      const name = document.getElementById(`newSubName-${catId}`).value.trim();
+      if (!id || !name) { showToast('ID and name required', 'error'); return; }
+      try {
+        const res = await fetch(`/api/categories/${catId}/subcategories`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, name }) });
+        const data = await res.json();
+        if (data.success) { showToast('Subcategory added'); loadCategories(); }
+        else showToast(data.error, 'error');
+      } catch { showToast('Connection error', 'error'); }
+    }
+
+    function startEdit(btn, type) {
+      const row = btn.closest(type === 'cat' ? '.bg-slate-800' : '.bg-amber-50');
+      row.querySelector(type === 'cat' ? '.cat-name' : '.sub-name').classList.add('hidden');
+      row.querySelector(type === 'cat' ? '.cat-edit' : '.sub-edit').classList.remove('hidden');
+      row.querySelector('.edit-btn').classList.add('hidden');
+      row.querySelector('.save-btn').classList.remove('hidden');
+      row.querySelector('.cancel-btn').classList.remove('hidden');
+    }
+
+    function cancelEdit(btn, type) {
+      const row = btn.closest(type === 'cat' ? '.bg-slate-800' : '.bg-amber-50');
+      row.querySelector(type === 'cat' ? '.cat-name' : '.sub-name').classList.remove('hidden');
+      row.querySelector(type === 'cat' ? '.cat-edit' : '.sub-edit').classList.add('hidden');
+      row.querySelector('.edit-btn').classList.remove('hidden');
+      row.querySelector('.save-btn').classList.add('hidden');
+      row.querySelector('.cancel-btn').classList.add('hidden');
+    }
+
+    async function saveCatEdit(btn, catId) {
+      const row = btn.closest('.bg-slate-800');
+      const name = row.querySelector('.cat-edit').value.trim();
+      if (!name) { showToast('Name required', 'error'); return; }
+      try {
+        const res = await fetch(`/api/categories/${catId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+        if ((await res.json()).success) { showToast('Updated'); loadCategories(); }
+        else showToast('Failed', 'error');
+      } catch { showToast('Error', 'error'); }
+    }
+
+    async function saveSubEdit(btn, catId, subId) {
+      const row = btn.closest('.bg-amber-50');
+      const name = row.querySelector('.sub-edit').value.trim();
+      if (!name) { showToast('Name required', 'error'); return; }
+      try {
+        const res = await fetch(`/api/categories/${catId}/subcategories/${subId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+        if ((await res.json()).success) { showToast('Updated'); loadCategories(); }
+        else showToast('Failed', 'error');
+      } catch { showToast('Error', 'error'); }
+    }
+
+    async function deleteMainCategory(catId) {
+      if (!confirm('Delete this category and ALL its thumbnails? This cannot be undone.')) return;
+      try {
+        const res = await fetch(`/api/categories/${catId}`, { method: 'DELETE' });
+        if ((await res.json()).success) { showToast('Category deleted'); loadCategories(); }
+      } catch { showToast('Error', 'error'); }
+    }
+
+    async function deleteSubcategory(catId, subId) {
+      if (!confirm('Delete this subcategory?')) return;
+      try {
+        const res = await fetch(`/api/categories/${catId}/subcategories/${subId}`, { method: 'DELETE' });
+        if ((await res.json()).success) { showToast('Subcategory deleted'); loadCategories(); }
+      } catch { showToast('Error', 'error'); }
+    }
+
+    // ===== TYPE SELECTOR =====
     const thumbRadio = document.getElementById('thumbRadio');
     const postRadio = document.getElementById('postRadio');
-    const thumbCard = document.getElementById('thumbCard');
-    const postCard = document.getElementById('postCard');
-    const thumbnailForm = document.getElementById('thumbnailForm');
-    const postForm = document.getElementById('postForm');
-
     function updateTypeUI() {
       if (thumbRadio.checked) {
-        thumbCard.className = 'border-2 rounded-xl p-4 text-center transition-all border-blue-600 bg-blue-50';
-        postCard.className = 'border-2 rounded-xl p-4 text-center transition-all border-slate-200';
-        thumbCard.querySelector('svg').classList.replace('text-slate-400', 'text-blue-600');
-        postCard.querySelector('svg').classList.replace('text-blue-600', 'text-slate-400');
-        thumbnailForm.classList.remove('hidden');
-        postForm.classList.add('hidden');
+        document.getElementById('thumbCard').className = 'border-2 rounded-xl p-4 text-center transition-all border-blue-600 bg-blue-50';
+        document.getElementById('postCard').className = 'border-2 rounded-xl p-4 text-center transition-all border-slate-200';
+        document.getElementById('thumbCard').querySelector('svg').setAttribute('class', 'w-8 h-8 mx-auto mb-2 text-blue-600');
+        document.getElementById('postCard').querySelector('svg').setAttribute('class', 'w-8 h-8 mx-auto mb-2 text-slate-400');
+        document.getElementById('thumbnailForm').classList.remove('hidden');
+        document.getElementById('postForm').classList.add('hidden');
       } else {
-        postCard.className = 'border-2 rounded-xl p-4 text-center transition-all border-blue-600 bg-blue-50';
-        thumbCard.className = 'border-2 rounded-xl p-4 text-center transition-all border-slate-200';
-        postCard.querySelector('svg').classList.replace('text-slate-400', 'text-blue-600');
-        thumbCard.querySelector('svg').classList.replace('text-blue-600', 'text-slate-400');
-        postForm.classList.remove('hidden');
-        thumbnailForm.classList.add('hidden');
+        document.getElementById('postCard').className = 'border-2 rounded-xl p-4 text-center transition-all border-blue-600 bg-blue-50';
+        document.getElementById('thumbCard').className = 'border-2 rounded-xl p-4 text-center transition-all border-slate-200';
+        document.getElementById('postCard').querySelector('svg').setAttribute('class', 'w-8 h-8 mx-auto mb-2 text-blue-600');
+        document.getElementById('thumbCard').querySelector('svg').setAttribute('class', 'w-8 h-8 mx-auto mb-2 text-slate-400');
+        document.getElementById('postForm').classList.remove('hidden');
+        document.getElementById('thumbnailForm').classList.add('hidden');
       }
     }
-
     thumbRadio.addEventListener('change', updateTypeUI);
     postRadio.addEventListener('change', updateTypeUI);
 
-    // ===== Drag & Drop + File Select Helpers =====
+    // ===== DRAG & DROP =====
     function setupDropZone(zoneId, inputId, onFiles) {
-      const zone = document.getElementById(zoneId);
-      const input = document.getElementById(inputId);
-
+      const zone = document.getElementById(zoneId), input = document.getElementById(inputId);
       zone.addEventListener('click', () => input.click());
-
-      zone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        zone.classList.add('border-blue-400', 'bg-blue-50');
-      });
-
-      zone.addEventListener('dragleave', () => {
-        zone.classList.remove('border-blue-400', 'bg-blue-50');
-      });
-
-      zone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        zone.classList.remove('border-blue-400', 'bg-blue-50');
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-          input.files = files;
-          onFiles(files);
-        }
-      });
-
-      input.addEventListener('change', () => {
-        if (input.files.length > 0) onFiles(input.files);
-      });
+      zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('border-blue-400', 'bg-blue-50'); });
+      zone.addEventListener('dragleave', () => zone.classList.remove('border-blue-400', 'bg-blue-50'));
+      zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('border-blue-400', 'bg-blue-50'); if (e.dataTransfer.files.length) { input.files = e.dataTransfer.files; onFiles(e.dataTransfer.files); } });
+      input.addEventListener('change', () => { if (input.files.length) onFiles(input.files); });
     }
 
-    // ===== Thumbnail Upload =====
-    const thumbFile = document.getElementById('thumbFile');
-    const thumbPreview = document.getElementById('thumbPreview');
-    const thumbPreviewImg = document.getElementById('thumbPreviewImg');
-    const thumbPreviewName = document.getElementById('thumbPreviewName');
-
-    setupDropZone('thumbDropZone', 'thumbFile', (files) => {
-      const file = files[0];
+    // ===== THUMBNAIL UPLOAD =====
+    setupDropZone('thumbDropZone', 'thumbFile', files => {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        thumbPreviewImg.src = e.target.result;
-        thumbPreviewName.textContent = `${file.name} (${formatSize(file.size)})`;
-        thumbPreview.classList.remove('hidden');
-      };
-      reader.readAsDataURL(file);
+      reader.onload = e => { document.getElementById('thumbPreviewImg').src = e.target.result; document.getElementById('thumbPreviewName').textContent = `${files[0].name} (${formatSize(files[0].size)})`; document.getElementById('thumbPreview').classList.remove('hidden'); };
+      reader.readAsDataURL(files[0]);
     });
+    document.getElementById('thumbClear').addEventListener('click', () => { document.getElementById('thumbFile').value = ''; document.getElementById('thumbPreview').classList.add('hidden'); });
 
-    document.getElementById('thumbClear').addEventListener('click', () => {
-      thumbFile.value = '';
-      thumbPreview.classList.add('hidden');
-    });
-
-    document.getElementById('thumbForm').addEventListener('submit', async (e) => {
+    document.getElementById('thumbForm').addEventListener('submit', async e => {
       e.preventDefault();
-      if (!thumbFile.files[0]) {
-        showToast('Please select an image file', 'error');
-        return;
-      }
+      const file = document.getElementById('thumbFile').files[0];
+      const category = document.getElementById('thumbCategory').value;
+      if (!file) { showToast('Select an image', 'error'); return; }
+      if (!category) { showToast('Select a category', 'error'); return; }
 
-      const btn = document.getElementById('thumbSubmit');
-      const btnText = document.getElementById('thumbBtnText');
-      const spinner = document.getElementById('thumbSpinner');
-
-      btn.disabled = true;
-      btnText.textContent = 'Uploading...';
-      spinner.classList.remove('hidden');
-
+      const btn = document.getElementById('thumbSubmit'), txt = document.getElementById('thumbBtnText'), spin = document.getElementById('thumbSpinner');
+      btn.disabled = true; txt.textContent = 'Uploading...'; spin.classList.remove('hidden');
       try {
-        const formData = new FormData();
-        formData.append('thumbnail', thumbFile.files[0]);
-
-        const response = await fetch('/api/upload/thumbnail', {
-          method: 'POST',
-          body: formData
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          showToast('Thumbnail uploaded successfully!');
-          thumbFile.value = '';
-          thumbPreview.classList.add('hidden');
-        } else {
-          showToast(data.error || 'Upload failed', 'error');
-        }
-      } catch (err) {
-        showToast('Connection error. Please try again.', 'error');
-      } finally {
-        btn.disabled = false;
-        btnText.textContent = 'Upload Thumbnail';
-        spinner.classList.add('hidden');
-      }
+        const fd = new FormData();
+        fd.append('thumbnail', file);
+        fd.append('category', category);
+        fd.append('subcategory', document.getElementById('thumbSubcategory').value);
+        const res = await fetch('/api/upload/thumbnail', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) { showToast('Thumbnail uploaded!'); document.getElementById('thumbFile').value = ''; document.getElementById('thumbPreview').classList.add('hidden'); }
+        else showToast(data.error, 'error');
+      } catch { showToast('Connection error', 'error'); }
+      finally { btn.disabled = false; txt.textContent = 'Upload Thumbnail'; spin.classList.add('hidden'); }
     });
 
-    // ===== Blog Post Upload =====
-    const postTitle = document.getElementById('postTitle');
-    const slugPreview = document.getElementById('slugPreview');
-    const htmlFile = document.getElementById('htmlFile');
-    const htmlFileName = document.getElementById('htmlFileName');
-    const postImages = document.getElementById('postImages');
-    const imagePreviewGrid = document.getElementById('imagePreviewGrid');
-
-    // Slug preview
-    postTitle.addEventListener('input', () => {
-      const slug = postTitle.value
-        .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-+|-+$/g, '');
-      slugPreview.textContent = slug ? `Slug: ${slug}` : '';
+    // ===== POST UPLOAD =====
+    setupDropZone('htmlDropZone', 'htmlFile', files => { document.getElementById('htmlFileName').textContent = `Selected: ${files[0].name}`; document.getElementById('htmlFileName').classList.remove('hidden'); });
+    setupDropZone('imgDropZone', 'postImages', files => {
+      const grid = document.getElementById('imagePreviewGrid'); grid.innerHTML = ''; grid.classList.remove('hidden');
+      Array.from(files).forEach(f => { const r = new FileReader(); r.onload = e => { const d = document.createElement('div'); d.className = 'relative aspect-square rounded-lg overflow-hidden bg-slate-100'; d.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover"><div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">${f.name}</div>`; grid.appendChild(d); }; r.readAsDataURL(f); });
+    });
+    document.getElementById('postTitle').addEventListener('input', function() {
+      const slug = this.value.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '');
+      document.getElementById('slugPreview').textContent = slug ? `Slug: ${slug}` : '';
     });
 
-    // HTML file
-    setupDropZone('htmlDropZone', 'htmlFile', (files) => {
-      htmlFileName.textContent = `Selected: ${files[0].name}`;
-      htmlFileName.classList.remove('hidden');
-    });
-
-    // Post images
-    setupDropZone('imgDropZone', 'postImages', (files) => {
-      imagePreviewGrid.innerHTML = '';
-      imagePreviewGrid.classList.remove('hidden');
-
-      Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const div = document.createElement('div');
-          div.className = 'relative aspect-square rounded-lg overflow-hidden bg-slate-100';
-          div.innerHTML = `
-            <img src="${e.target.result}" class="w-full h-full object-cover" alt="${file.name}">
-            <div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">${file.name}</div>
-          `;
-          imagePreviewGrid.appendChild(div);
-        };
-        reader.readAsDataURL(file);
-      });
-    });
-
-    document.getElementById('blogForm').addEventListener('submit', async (e) => {
+    document.getElementById('blogForm').addEventListener('submit', async e => {
       e.preventDefault();
+      const title = document.getElementById('postTitle').value.trim();
+      const html = document.getElementById('htmlFile').files[0];
+      if (!title) { showToast('Enter a title', 'error'); return; }
+      if (!html) { showToast('Select an HTML file', 'error'); return; }
 
-      if (!postTitle.value.trim()) {
-        showToast('Please enter a post title', 'error');
-        return;
-      }
-      if (!htmlFile.files[0]) {
-        showToast('Please select an HTML file', 'error');
-        return;
-      }
-
-      const btn = document.getElementById('postSubmit');
-      const btnText = document.getElementById('postBtnText');
-      const spinner = document.getElementById('postSpinner');
-
-      btn.disabled = true;
-      btnText.textContent = 'Uploading...';
-      spinner.classList.remove('hidden');
-
+      const btn = document.getElementById('postSubmit'), txt = document.getElementById('postBtnText'), spin = document.getElementById('postSpinner');
+      btn.disabled = true; txt.textContent = 'Uploading...'; spin.classList.remove('hidden');
       try {
-        const formData = new FormData();
-        formData.append('title', postTitle.value.trim());
-        formData.append('htmlFile', htmlFile.files[0]);
-
-        if (postImages.files.length > 0) {
-          Array.from(postImages.files).forEach(file => {
-            formData.append('images', file);
-          });
-        }
-
-        const response = await fetch('/api/upload/post', {
-          method: 'POST',
-          body: formData
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          showToast('Blog post uploaded successfully!');
-          postTitle.value = '';
-          slugPreview.textContent = '';
-          htmlFile.value = '';
-          htmlFileName.classList.add('hidden');
-          postImages.value = '';
-          imagePreviewGrid.innerHTML = '';
-          imagePreviewGrid.classList.add('hidden');
-        } else {
-          showToast(data.error || 'Upload failed', 'error');
-        }
-      } catch (err) {
-        showToast('Connection error. Please try again.', 'error');
-      } finally {
-        btn.disabled = false;
-        btnText.textContent = 'Upload Post';
-        spinner.classList.add('hidden');
-      }
+        const fd = new FormData();
+        fd.append('title', title); fd.append('htmlFile', html);
+        Array.from(document.getElementById('postImages').files).forEach(f => fd.append('images', f));
+        const res = await fetch('/api/upload/post', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) { showToast('Post uploaded!'); document.getElementById('postTitle').value = ''; document.getElementById('slugPreview').textContent = ''; document.getElementById('htmlFile').value = ''; document.getElementById('htmlFileName').classList.add('hidden'); document.getElementById('postImages').value = ''; document.getElementById('imagePreviewGrid').innerHTML = ''; document.getElementById('imagePreviewGrid').classList.add('hidden'); }
+        else showToast(data.error, 'error');
+      } catch { showToast('Connection error', 'error'); }
+      finally { btn.disabled = false; txt.textContent = 'Upload Post'; spin.classList.add('hidden'); }
     });
 
-    // ===== Utility =====
-    function formatSize(bytes) {
-      if (bytes < 1024) return bytes + ' B';
-      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-    }
+    function formatSize(b) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b/1024).toFixed(1) + ' KB'; return (b/1048576).toFixed(1) + ' MB'; }
+
+    loadCategories();
   </script>
 </body>
 </html>

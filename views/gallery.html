@@ -7,7 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 min-h-screen">
-  <!-- Navigation -->
   <nav class="bg-slate-900 text-white shadow-lg">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
@@ -21,134 +20,207 @@
     </div>
   </nav>
 
-  <!-- Main Content -->
+  <!-- Toast -->
+  <div id="toast" class="fixed top-4 right-4 z-50 transform translate-x-[120%] transition-transform duration-300">
+    <div class="px-5 py-3 rounded-xl shadow-lg bg-emerald-50 border border-emerald-200 flex items-center gap-2">
+      <span class="text-emerald-600 font-bold">&check;</span>
+      <span id="toastMsg" class="text-sm font-medium text-emerald-800">Copied!</span>
+    </div>
+  </div>
+
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <div class="flex justify-between items-center mb-8">
+    <div class="flex justify-between items-center mb-6">
       <div>
         <h1 class="text-3xl font-bold text-slate-900">Thumbnail Gallery</h1>
         <p class="text-slate-500 mt-1" id="countText">Loading...</p>
       </div>
     </div>
 
-    <!-- Loading State -->
+    <!-- Main Category Filter -->
+    <div id="mainFilter" class="mb-3 flex flex-wrap gap-2"></div>
+    <!-- Subcategory Filter -->
+    <div id="subFilter" class="mb-8 flex flex-wrap gap-2"></div>
+
+    <!-- Loading -->
     <div id="loading" class="text-center py-24">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
       <p class="text-slate-500 mt-4">Loading thumbnails...</p>
     </div>
 
-    <!-- Empty State -->
+    <!-- Empty -->
     <div id="empty" class="hidden text-center py-24">
-      <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-      </svg>
-      <h3 class="text-lg font-semibold text-slate-700 mb-2">No thumbnails yet</h3>
-      <p class="text-slate-500 mb-6">Upload your first thumbnail to get started.</p>
-      <a href="/admin" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg transition-colors">
-        Upload Thumbnail
-      </a>
+      <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      <h3 class="text-lg font-semibold text-slate-700 mb-2">No thumbnails found</h3>
+      <p class="text-slate-500 mb-6">Try a different filter or upload new thumbnails.</p>
+      <a href="/admin" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg transition-colors">Upload Thumbnail</a>
     </div>
 
     <!-- Gallery Grid -->
     <div id="gallery" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
   </main>
 
-  <!-- Lightbox Modal -->
+  <!-- Lightbox -->
   <div id="lightbox" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4" onclick="closeLightbox()">
-    <button class="absolute top-4 right-4 text-white hover:text-slate-300 transition-colors" onclick="closeLightbox()">
-      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-      </svg>
+    <button class="absolute top-4 right-4 text-white hover:text-slate-300 transition-colors z-10" onclick="closeLightbox()">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
     </button>
     <img id="lightboxImg" class="max-w-full max-h-[90vh] rounded-xl shadow-2xl" alt="Full size" onclick="event.stopPropagation()">
   </div>
 
   <script>
-    const gallery = document.getElementById('gallery');
-    const loading = document.getElementById('loading');
-    const empty = document.getElementById('empty');
-    const countText = document.getElementById('countText');
+    let allThumbnails = [];
+    let categories = [];
+    let activeCat = 'all';
+    let activeSub = 'all';
 
-    function formatSize(bytes) {
-      if (bytes < 1024) return bytes + ' B';
-      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    function openLightbox(src) {
+      const lb = document.getElementById('lightbox');
+      document.getElementById('lightboxImg').src = src;
+      lb.classList.remove('hidden'); lb.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox() {
+      const lb = document.getElementById('lightbox');
+      lb.classList.add('hidden'); lb.classList.remove('flex');
+      document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+    let toastTimer;
+    function showCopied(msg) {
+      clearTimeout(toastTimer);
+      document.getElementById('toastMsg').textContent = msg || 'Copied!';
+      document.getElementById('toast').style.transform = 'translateX(0)';
+      toastTimer = setTimeout(() => { document.getElementById('toast').style.transform = 'translateX(120%)'; }, 2000);
     }
 
-    function formatDate(dateStr) {
-      return new Date(dateStr).toLocaleDateString('en-US', {
-        year: 'numeric', month: 'short', day: 'numeric'
+    async function copyLink(path) {
+      const url = window.location.origin + path;
+      try { await navigator.clipboard.writeText(url); }
+      catch { const ta = document.createElement('textarea'); ta.value = url; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+      showCopied('Link copied!');
+    }
+
+    function getFiltered() {
+      let items = allThumbnails;
+      if (activeCat !== 'all') items = items.filter(t => t.category === activeCat);
+      if (activeSub !== 'all') items = items.filter(t => t.subcategory === activeSub);
+      return items;
+    }
+
+    function renderGallery(thumbnails) {
+      const gallery = document.getElementById('gallery');
+      const empty = document.getElementById('empty');
+      const countText = document.getElementById('countText');
+
+      if (thumbnails.length === 0) {
+        gallery.classList.add('hidden'); empty.classList.remove('hidden');
+        countText.textContent = '0 thumbnails'; return;
+      }
+
+      empty.classList.add('hidden'); gallery.classList.remove('hidden');
+      countText.textContent = `${thumbnails.length} thumbnail${thumbnails.length === 1 ? '' : 's'}`;
+
+      gallery.innerHTML = thumbnails.map(t => `
+        <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group">
+          <div class="aspect-video relative overflow-hidden bg-slate-100 cursor-pointer" onclick="openLightbox('${t.path}')">
+            <img src="${t.path}" alt="${t.originalName}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy"
+              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="hidden w-full h-full items-center justify-center text-slate-400">
+              <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 min-h-[72px]">
+            <div class="p-3 flex flex-col justify-between">
+              <p class="text-sm font-medium text-slate-800 truncate" title="${t.originalName}">${t.originalName}</p>
+              <div class="flex items-center gap-1.5 mt-1">
+                <span class="text-xs font-medium text-slate-500">${t.categoryName}</span>
+                ${t.subcategoryName ? `<span class="text-xs text-slate-300">-</span><span class="text-xs text-amber-600">${t.subcategoryName}</span>` : ''}
+              </div>
+            </div>
+            <button onclick="event.stopPropagation(); copyLink('${t.path}')" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium flex items-center justify-center gap-2 transition-colors rounded-br-xl">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+              Copy Link
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function setMainFilter(cat) {
+      activeCat = cat;
+      activeSub = 'all';
+      buildSubFilter();
+      renderGallery(getFiltered());
+      document.querySelectorAll('#mainFilter button').forEach(btn => {
+        btn.className = btn.dataset.cat === cat
+          ? 'px-4 py-2 rounded-lg text-sm font-medium bg-slate-800 text-white'
+          : 'px-4 py-2 rounded-lg text-sm font-medium bg-white text-slate-600 hover:bg-slate-100 border border-slate-200';
       });
     }
 
-    function openLightbox(src) {
-      const lightbox = document.getElementById('lightbox');
-      document.getElementById('lightboxImg').src = src;
-      lightbox.classList.remove('hidden');
-      lightbox.classList.add('flex');
-      document.body.style.overflow = 'hidden';
+    function setSubFilter(sub) {
+      activeSub = sub;
+      renderGallery(getFiltered());
+      document.querySelectorAll('#subFilter button').forEach(btn => {
+        btn.className = btn.dataset.sub === sub
+          ? 'px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500 text-white'
+          : 'px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200';
+      });
     }
 
-    function closeLightbox() {
-      const lightbox = document.getElementById('lightbox');
-      lightbox.classList.add('hidden');
-      lightbox.classList.remove('flex');
-      document.body.style.overflow = '';
+    function buildMainFilter() {
+      const bar = document.getElementById('mainFilter');
+      const counts = { all: allThumbnails.length };
+      allThumbnails.forEach(t => { counts[t.category] = (counts[t.category] || 0) + 1; });
+
+      let html = `<button data-cat="all" onclick="setMainFilter('all')" class="px-4 py-2 rounded-lg text-sm font-medium bg-slate-800 text-white">All (${counts.all})</button>`;
+      categories.forEach(cat => {
+        const count = counts[cat.id] || 0;
+        if (count > 0) html += `<button data-cat="${cat.id}" onclick="setMainFilter('${cat.id}')" class="px-4 py-2 rounded-lg text-sm font-medium bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">${cat.name} (${count})</button>`;
+      });
+      bar.innerHTML = html;
     }
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeLightbox();
-    });
+    function buildSubFilter() {
+      const bar = document.getElementById('subFilter');
+      if (activeCat === 'all') { bar.innerHTML = ''; return; }
+      const cat = categories.find(c => c.id === activeCat);
+      if (!cat || cat.subcategories.length === 0) { bar.innerHTML = ''; return; }
 
-    async function loadGallery() {
+      const filtered = allThumbnails.filter(t => t.category === activeCat);
+      const counts = { all: filtered.length };
+      filtered.forEach(t => { if (t.subcategory) counts[t.subcategory] = (counts[t.subcategory] || 0) + 1; });
+
+      let html = `<button data-sub="all" onclick="setSubFilter('all')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500 text-white">All (${counts.all})</button>`;
+      cat.subcategories.forEach(sub => {
+        const count = counts[sub.id] || 0;
+        if (count > 0) html += `<button data-sub="${sub.id}" onclick="setSubFilter('${sub.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200">${sub.name} (${count})</button>`;
+      });
+      bar.innerHTML = html;
+    }
+
+    async function init() {
       try {
-        const response = await fetch('/api/thumbnails');
-        const data = await response.json();
+        const [catRes, thumbRes] = await Promise.all([fetch('/api/categories'), fetch('/api/thumbnails')]);
+        const catData = await catRes.json();
+        const thumbData = await thumbRes.json();
 
-        loading.classList.add('hidden');
+        document.getElementById('loading').classList.add('hidden');
+        if (catData.success) categories = catData.categories;
+        if (thumbData.success) allThumbnails = thumbData.thumbnails;
 
-        if (!data.success || data.thumbnails.length === 0) {
-          empty.classList.remove('hidden');
-          countText.textContent = '0 thumbnails';
-          return;
-        }
-
-        countText.textContent = `${data.thumbnails.length} thumbnail${data.thumbnails.length === 1 ? '' : 's'}`;
-        gallery.classList.remove('hidden');
-
-        data.thumbnails.forEach(thumb => {
-          const card = document.createElement('div');
-          card.className = 'bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer group';
-          card.innerHTML = `
-            <div class="aspect-video relative overflow-hidden bg-slate-100">
-              <img
-                src="${thumb.path}"
-                alt="${thumb.originalName}"
-                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                loading="lazy"
-                onerror="this.parentElement.innerHTML='<div class=\\'flex items-center justify-center w-full h-full text-slate-400\\'><svg class=\\'w-12 h-12\\' fill=\\'none\\' stroke=\\'currentColor\\' viewBox=\\'0 0 24 24\\'><path stroke-linecap=\\'round\\' stroke-linejoin=\\'round\\' stroke-width=\\'2\\' d=\\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\\'/></svg></div>'"
-              >
-            </div>
-            <div class="p-4">
-              <p class="text-sm font-medium text-slate-700 truncate">${thumb.originalName}</p>
-              <div class="flex justify-between items-center mt-2">
-                <span class="text-xs text-slate-400">${formatDate(thumb.uploadDate)}</span>
-                <span class="text-xs text-slate-400">${formatSize(thumb.fileSize)}</span>
-              </div>
-            </div>
-          `;
-          card.addEventListener('click', () => openLightbox(thumb.path));
-          gallery.appendChild(card);
-        });
-
+        buildMainFilter();
+        buildSubFilter();
+        renderGallery(allThumbnails);
       } catch (err) {
-        loading.classList.add('hidden');
-        empty.classList.remove('hidden');
-        countText.textContent = 'Failed to load';
-        console.error('Error loading gallery:', err);
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('empty').classList.remove('hidden');
+        document.getElementById('countText').textContent = 'Failed to load';
       }
     }
 
-    loadGallery();
+    init();
   </script>
 </body>
 </html>
