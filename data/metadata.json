@@ -1,34 +1,6 @@
 {
-  "posts": [
-    {
-      "id": "83455a",
-      "title": "The 2025 Australian GP Reacp were back baby",
-      "slug": "the-2025-australian-gp-reacp-were-back-baby",
-      "htmlPath": "/uploads/posts/the-2025-australian-gp-reacp-were-back-baby/content.html",
-      "images": [
-        "/uploads/posts/the-2025-australian-gp-reacp-were-back-baby/images/1771320250752-1_0VFJKirLeJ-XwjXJ1-MeCw.png",
-        "/uploads/posts/the-2025-australian-gp-reacp-were-back-baby/images/1771320250752-1_1M72K_Xafh1Dkzce1fFtRA.png",
-        "/uploads/posts/the-2025-australian-gp-reacp-were-back-baby/images/1771320250753-1_5l5v3We8ynRtQ5hTr8goAA.jpeg",
-        "/uploads/posts/the-2025-australian-gp-reacp-were-back-baby/images/1771320250753-1_9KKBgi_u15Jf9ZjfUWjORg.png",
-        "/uploads/posts/the-2025-australian-gp-reacp-were-back-baby/images/1771320250754-1_36N1B9WYLDcE-B-7AbRmjA.png",
-        "/uploads/posts/the-2025-australian-gp-reacp-were-back-baby/images/1771320250754-1_Ji_lYYcDhgy6w-wp64cZpw.jpeg",
-        "/uploads/posts/the-2025-australian-gp-reacp-were-back-baby/images/1771320250754-1_mdAtvCpfOIHDf2whUex59A.png",
-        "/uploads/posts/the-2025-australian-gp-reacp-were-back-baby/images/1771320250755-1_Qw9LqT5aLkUXcMIg5exAYQ.png"
-      ],
-      "uploadDate": "2026-02-17T09:24:10.755Z"
-    }
-  ],
+  "posts": [],
   "assets": [
-    {
-      "folder": "",
-      "id": "5a3fba",
-      "filename": "fboo.mp4",
-      "originalName": "fboo.mp4",
-      "path": "/assets/fboo.mp4",
-      "fileSize": 1098735,
-      "mimeType": "video/mp4",
-      "uploadDate": "2026-02-17T09:19:13.982Z"
-    },
     {
       "folder": "",
       "id": "e4d983",
