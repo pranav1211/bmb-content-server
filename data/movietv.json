@@ -794,6 +794,16 @@
       "mimeType": "image/webp",
       "subcategory": "movie",
       "uploadDate": "2025-03-10T16:44:42.314Z"
+    },
+    {
+      "id": "221dce",
+      "filename": "nysm3.webp",
+      "originalName": "nysm3.webp",
+      "path": "/thumbnails/movietv/tv/nysm3.webp",
+      "fileSize": 987468,
+      "mimeType": "image/webp",
+      "subcategory": "tv",
+      "uploadDate": "2026-02-17T09:16:06.940Z"
     }
   ]
 }
