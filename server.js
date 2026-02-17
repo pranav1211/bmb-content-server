@@ -147,7 +147,7 @@ function writeAssets(assets) {
 
 // ===== POST-UPLOAD HOOK =====
 function runPushScript() {
-  const scriptPath = path.join(__dirname, 'shellfiles', 'push.sh');
+  const scriptPath = path.join(__dirname, '/shellfiles', 'push.sh');
   if (!fs.existsSync(scriptPath)) return;
   exec(`bash "${scriptPath}"`, { cwd: __dirname }, (err, stdout, stderr) => {
     if (err) console.error('push.sh error:', err.message);
