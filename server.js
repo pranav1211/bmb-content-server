@@ -459,6 +459,7 @@ app.put('/api/thumbnails/:id', requireAuth, (req, res) => {
     writeCategoryFile(foundCatId, foundData);
   }
 
+  runPushScript();
   res.json({ success: true, thumbnail: foundThumb });
 });
 
@@ -475,6 +476,7 @@ app.delete('/api/thumbnails/:id', requireAuth, (req, res) => {
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
       data.thumbnails.splice(idx, 1);
       writeCategoryFile(catId, data);
+      runPushScript();
       return res.json({ success: true });
     }
   }
@@ -570,6 +572,7 @@ app.put('/api/assets/folders/rename', requireAuth, (req, res) => {
     }
   });
   writeAssets(assets);
+  runPushScript();
   res.json({ success: true, newPath });
 });
 
@@ -587,6 +590,7 @@ app.delete('/api/assets/folders', requireAuth, (req, res) => {
   let assets = readAssets();
   assets = assets.filter(a => !(a.folder === folderPath || (a.folder && a.folder.startsWith(folderPath + '/'))));
   writeAssets(assets);
+  runPushScript();
   res.json({ success: true });
 });
 
@@ -664,6 +668,7 @@ app.put('/api/assets/:id/rename', requireAuth, (req, res) => {
   asset.originalName = finalName;
   asset.path = folder ? `/assets/${folder}/${finalName}` : `/assets/${finalName}`;
   writeAssets(assets);
+  runPushScript();
   res.json({ success: true, asset });
 });
 
@@ -689,6 +694,7 @@ app.put('/api/assets/:id/move', requireAuth, (req, res) => {
   asset.folder = newFolder;
   asset.path = newFolder ? `/assets/${newFolder}/${asset.filename}` : `/assets/${asset.filename}`;
   writeAssets(assets);
+  runPushScript();
   res.json({ success: true, asset });
 });
 
@@ -703,6 +709,7 @@ app.delete('/api/assets/:id', requireAuth, (req, res) => {
   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   assets.splice(index, 1);
   writeAssets(assets);
+  runPushScript();
   res.json({ success: true });
 });
 
