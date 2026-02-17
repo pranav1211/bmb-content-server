@@ -1,79 +1,80 @@
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
 
-const dataDir = path.join(__dirname, 'data');
-const metadataPath = path.join(dataDir, 'metadata.json');
+const baseDir = __dirname;
+const publicDir = path.join(baseDir, 'public');
+const thumbDir = path.join(baseDir, 'thumbnails');
+const dataDir = path.join(baseDir, 'data');
 
-// Read current metadata
-const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
+// Source folder mapping: public path -> { category, subcategory }
+const folderMap = [
+  { src: 'experience', cat: 'experience', sub: '' },
+  { src: 'f1/2025', cat: 'f1', sub: '2025' },
+  { src: 'f1/general', cat: 'f1', sub: 'general' },
+  { src: 'movietv/movie', cat: 'movietv', sub: 'movie' },
+  { src: 'movietv/tv', cat: 'movietv', sub: 'tv', filesOnly: true },
+  { src: 'movietv/tv/penguin', cat: 'movietv', sub: 'tv-penguin' },
+  { src: 'tech', cat: 'tech', sub: '' },
+];
 
-// Map old flat category IDs -> main category + subcategory
-const mapping = {
-  'experience':          { main: 'experience', mainName: 'Experience', sub: '', subName: '' },
-  'f1-2025':             { main: 'f1', mainName: 'F1', sub: '2025', subName: '2025' },
-  'f1-general':          { main: 'f1', mainName: 'F1', sub: 'general', subName: 'General' },
-  'movietv-movie':       { main: 'movietv', mainName: 'Movie/TV', sub: 'movie', subName: 'Movie' },
-  'movietv-tv':          { main: 'movietv', mainName: 'Movie/TV', sub: 'tv', subName: 'TV' },
-  'movietv-tv-penguin':  { main: 'movietv', mainName: 'Movie/TV', sub: 'tv-penguin', subName: 'TV Penguin' },
-  'tech':                { main: 'tech', mainName: 'Tech', sub: '', subName: '' },
-};
+let totalCopied = 0;
 
-// Build per-category data
-const catFiles = {};
-
-for (const thumb of (metadata.thumbnails || [])) {
-  const map = mapping[thumb.category];
-  if (!map) {
-    console.log(`Skipping thumbnail with unknown category: ${thumb.category}`);
+for (const entry of folderMap) {
+  const srcPath = path.join(publicDir, entry.src);
+  if (!fs.existsSync(srcPath)) {
+    console.log(`Skip (not found): public/${entry.src}`);
     continue;
   }
 
-  // Initialize category file structure if needed
-  if (!catFiles[map.main]) {
-    catFiles[map.main] = {
-      name: map.mainName,
-      subcategories: [],
-      thumbnails: []
-    };
+  const destParts = [thumbDir, entry.cat];
+  if (entry.sub) destParts.push(entry.sub);
+  const destPath = path.join(...destParts);
+  fs.mkdirSync(destPath, { recursive: true });
+
+  const items = fs.readdirSync(srcPath);
+  let copied = 0;
+  for (const item of items) {
+    const fullSrc = path.join(srcPath, item);
+    const stat = fs.statSync(fullSrc);
+    if (entry.filesOnly && stat.isDirectory()) continue;
+    if (!stat.isFile()) continue;
+
+    fs.copyFileSync(fullSrc, path.join(destPath, item));
+    copied++;
+    totalCopied++;
   }
-
-  const catData = catFiles[map.main];
-
-  // Add subcategory if not already present
-  if (map.sub && !catData.subcategories.find(s => s.id === map.sub)) {
-    catData.subcategories.push({ id: map.sub, name: map.subName });
-  }
-
-  // Add thumbnail with new 6-char ID and subcategory field (strip old category field)
-  catData.thumbnails.push({
-    id: crypto.randomBytes(3).toString('hex'),
-    filename: thumb.filename,
-    originalName: thumb.originalName,
-    path: thumb.path,
-    fileSize: thumb.fileSize,
-    mimeType: thumb.mimeType,
-    subcategory: map.sub,
-    uploadDate: thumb.uploadDate
-  });
+  console.log(`Copied ${copied} files: public/${entry.src} -> thumbnails/${entry.cat}${entry.sub ? '/' + entry.sub : ''}`);
 }
 
-// Write per-category JSON files
-for (const [catId, catData] of Object.entries(catFiles)) {
-  // Sort thumbnails by date descending within each file
-  catData.thumbnails.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
-  const filePath = path.join(dataDir, `${catId}.json`);
-  fs.writeFileSync(filePath, JSON.stringify(catData, null, 2));
-  console.log(`Created: data/${catId}.json (${catData.thumbnails.length} thumbnails, ${catData.subcategories.length} subcategories)`);
+// Update each category JSON file with new paths
+const catFiles = fs.readdirSync(dataDir).filter(f => f.endsWith('.json') && f !== 'metadata.json');
+
+for (const file of catFiles) {
+  const catId = file.replace('.json', '');
+  const filePath = path.join(dataDir, file);
+  const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+
+  for (const thumb of (data.thumbnails || [])) {
+    const parts = ['/thumbnails', catId];
+    if (thumb.subcategory) parts.push(thumb.subcategory);
+    parts.push(thumb.originalName);
+    thumb.path = parts.join('/');
+    thumb.filename = thumb.originalName;
+  }
+
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+  console.log(`Updated paths: data/${file} (${data.thumbnails?.length || 0} thumbnails)`);
 }
 
-// Update metadata.json to only keep posts
-const posts = (metadata.posts || []).map(p => ({
-  ...p,
-  id: crypto.randomBytes(3).toString('hex')
-}));
-fs.writeFileSync(metadataPath, JSON.stringify({ posts }, null, 2));
-console.log(`\nUpdated: data/metadata.json (posts only)`);
+// Delete migrated copies from uploads/thumbnails/
+const uploadsThumbDir = path.join(baseDir, 'uploads', 'thumbnails');
+if (fs.existsSync(uploadsThumbDir)) {
+  const migrated = fs.readdirSync(uploadsThumbDir).filter(f => f.startsWith('migrated-'));
+  for (const f of migrated) {
+    fs.unlinkSync(path.join(uploadsThumbDir, f));
+  }
+  console.log(`\nDeleted ${migrated.length} migrated files from uploads/thumbnails/`);
+}
 
-const totalThumbs = Object.values(catFiles).reduce((sum, c) => sum + c.thumbnails.length, 0);
-console.log(`\nDone! Split ${totalThumbs} thumbnails across ${Object.keys(catFiles).length} category files.`);
+console.log(`\nDone! Copied ${totalCopied} original files to thumbnails/ folder structure.`);
+console.log('You can now delete the public/ folder.');

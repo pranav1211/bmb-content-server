@@ -11,17 +11,18 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const dataDir = path.join(__dirname, 'data');
 const metadataPath = path.join(dataDir, 'metadata.json');
+const thumbDir = path.join(__dirname, 'thumbnails');
+const assetsDir = path.join(__dirname, 'assets');
 
 // Trust nginx reverse proxy
 app.set('trust proxy', 1);
 
 // ===== ENSURE DIRECTORIES =====
-['uploads/thumbnails', 'uploads/posts', 'data'].forEach(dir => {
-  const fullPath = path.join(__dirname, dir);
-  if (!fs.existsSync(fullPath)) fs.mkdirSync(fullPath, { recursive: true });
+[dataDir, thumbDir, assetsDir, path.join(__dirname, 'uploads', 'posts')].forEach(dir => {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 if (!fs.existsSync(metadataPath)) {
-  fs.writeFileSync(metadataPath, JSON.stringify({ posts: [] }, null, 2));
+  fs.writeFileSync(metadataPath, JSON.stringify({ posts: [], assets: [] }, null, 2));
 }
 
 // ===== MIDDLEWARE =====
@@ -37,8 +38,11 @@ app.use(session({
     maxAge: 24 * 60 * 60 * 1000
   }
 }));
+
+// Static file serving
+app.use('/thumbnails', express.static(thumbDir));
+app.use('/assets', express.static(assetsDir, { index: false }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use(express.static(path.join(__dirname, 'public')));
 
 // ===== HELPER FUNCTIONS =====
 
@@ -104,15 +108,38 @@ function getAllThumbnails() {
   return all;
 }
 
-// ===== POSTS HELPERS =====
-
-function readPosts() {
-  try { return JSON.parse(fs.readFileSync(metadataPath, 'utf-8')).posts || []; }
-  catch { return []; }
+// Ensure thumbnail folder structure exists for a category/subcategory
+function ensureThumbFolder(catId, subId) {
+  const parts = [thumbDir, catId];
+  if (subId) parts.push(subId);
+  const dir = path.join(...parts);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
 }
 
+// ===== POSTS & ASSETS HELPERS =====
+
+function readMetadata() {
+  try { return JSON.parse(fs.readFileSync(metadataPath, 'utf-8')); }
+  catch { return { posts: [], assets: [] }; }
+}
+
+function writeMetadata(data) {
+  fs.writeFileSync(metadataPath, JSON.stringify(data, null, 2));
+}
+
+function readPosts() { return readMetadata().posts || []; }
 function writePosts(posts) {
-  fs.writeFileSync(metadataPath, JSON.stringify({ posts }, null, 2));
+  const meta = readMetadata();
+  meta.posts = posts;
+  writeMetadata(meta);
+}
+
+function readAssets() { return readMetadata().assets || []; }
+function writeAssets(assets) {
+  const meta = readMetadata();
+  meta.assets = assets;
+  writeMetadata(meta);
 }
 
 // ===== MULTER CONFIG =====
@@ -123,13 +150,9 @@ const imageFilter = (req, file, cb) => {
   else cb(new Error('Only JPG, PNG, and WebP images are allowed'), false);
 };
 
-const thumbnailStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, 'uploads', 'thumbnails')),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${sanitizeFilename(file.originalname)}`)
-});
-
+// Thumbnail upload uses memory storage so we can determine destination from form fields
 const thumbnailUpload = multer({
-  storage: thumbnailStorage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: imageFilter
 });
@@ -147,6 +170,27 @@ const postUpload = multer({
       else cb(new Error('Only JPG, PNG, and WebP images are allowed'), false);
     } else cb(new Error('Unexpected field'), false);
   }
+});
+
+// Asset upload - any file type, 50MB limit
+const assetUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, assetsDir),
+    filename: (req, file, cb) => {
+      const name = sanitizeFilename(file.originalname);
+      // Handle collision: if file exists, add suffix
+      let finalName = name;
+      let counter = 1;
+      while (fs.existsSync(path.join(assetsDir, finalName))) {
+        const ext = path.extname(name);
+        const base = path.basename(name, ext);
+        finalName = `${base}-${counter}${ext}`;
+        counter++;
+      }
+      cb(null, finalName);
+    }
+  }),
+  limits: { fileSize: 50 * 1024 * 1024 }
 });
 
 // ===== AUTH MIDDLEWARE =====
@@ -179,6 +223,11 @@ app.get('/admin', requireAuth, (req, res) => res.sendFile(path.join(__dirname, '
 app.get('/gallery', (req, res) => res.sendFile(path.join(__dirname, 'views', 'gallery.html')));
 app.get('/posts', (req, res) => res.sendFile(path.join(__dirname, 'views', 'posts.html')));
 
+// Assets page - protected
+app.get('/assets', requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'assets.html'));
+});
+
 app.get('/posts/:slug', (req, res) => {
   const { slug } = req.params;
   const posts = readPosts();
@@ -208,6 +257,7 @@ app.post('/api/categories', requireAuth, (req, res) => {
   if (fs.existsSync(path.join(dataDir, `${sanitizedId}.json`))) return res.status(400).json({ error: 'Category already exists' });
 
   writeCategoryFile(sanitizedId, { name: name.trim(), subcategories: [], thumbnails: [] });
+  ensureThumbFolder(sanitizedId);
   res.json({ success: true });
 });
 
@@ -240,6 +290,7 @@ app.post('/api/categories/:id/subcategories', requireAuth, (req, res) => {
 
   data.subcategories.push({ id: sanitizedId, name: name.trim() });
   writeCategoryFile(req.params.id, data);
+  ensureThumbFolder(req.params.id, sanitizedId);
   res.json({ success: true });
 });
 
@@ -289,11 +340,29 @@ app.post('/api/upload/thumbnail', requireAuth, (req, res) => {
     const catData = readCategoryFile(category);
     if (!catData) return res.status(400).json({ error: 'Category not found' });
 
+    // Save file to thumbnails/{category}/{subcategory}/{originalname}
+    const destDir = ensureThumbFolder(category, subcategory || '');
+    let filename = sanitizeFilename(req.file.originalname);
+    // Handle collision
+    let counter = 1;
+    while (fs.existsSync(path.join(destDir, filename))) {
+      const ext = path.extname(req.file.originalname);
+      const base = path.basename(req.file.originalname, ext);
+      filename = sanitizeFilename(`${base}-${counter}${ext}`);
+      counter++;
+    }
+    fs.writeFileSync(path.join(destDir, filename), req.file.buffer);
+
+    // Build URL path
+    const urlParts = ['/thumbnails', category];
+    if (subcategory) urlParts.push(subcategory);
+    urlParts.push(filename);
+
     const entry = {
       id: generateId(),
-      filename: req.file.filename,
+      filename: filename,
       originalName: req.file.originalname,
-      path: `/uploads/thumbnails/${req.file.filename}`,
+      path: urlParts.join('/'),
       fileSize: req.file.size,
       mimeType: req.file.mimetype,
       subcategory: subcategory || '',
@@ -304,6 +373,50 @@ app.post('/api/upload/thumbnail', requireAuth, (req, res) => {
     writeCategoryFile(category, catData);
     res.json({ success: true, thumbnail: entry });
   });
+});
+
+// ===== ASSET API =====
+
+app.get('/api/assets', requireAuth, (req, res) => {
+  res.json({ success: true, assets: sortByDateDesc([...readAssets()]) });
+});
+
+app.post('/api/upload/asset', requireAuth, (req, res) => {
+  assetUpload.single('file')(req, res, (err) => {
+    if (err) {
+      if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE')
+        return res.status(400).json({ error: 'File size exceeds 50MB limit' });
+      return res.status(400).json({ error: err.message });
+    }
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const entry = {
+      id: generateId(),
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      path: `/assets/${req.file.filename}`,
+      fileSize: req.file.size,
+      mimeType: req.file.mimetype,
+      uploadDate: new Date().toISOString()
+    };
+
+    const assets = readAssets();
+    assets.push(entry);
+    writeAssets(assets);
+    res.json({ success: true, asset: entry });
+  });
+});
+
+app.delete('/api/assets/:id', requireAuth, (req, res) => {
+  const assets = readAssets();
+  const index = assets.findIndex(a => a.id === req.params.id);
+  if (index === -1) return res.status(404).json({ error: 'Asset not found' });
+  const asset = assets[index];
+  const filePath = path.join(assetsDir, asset.filename);
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  assets.splice(index, 1);
+  writeAssets(assets);
+  res.json({ success: true });
 });
 
 // ===== POST API =====
@@ -373,6 +486,7 @@ function navHTML(active) {
   const links = [
     { href: '/gallery', label: 'Gallery' },
     { href: '/posts', label: 'Posts' },
+    { href: '/assets', label: 'Assets' },
     { href: '/admin', label: 'Admin' }
   ];
   const linkItems = links.map(l =>
@@ -453,5 +567,6 @@ app.listen(PORT, () => {
   console.log(`BMB Content Server running on http://localhost:${PORT}`);
   console.log(`  Gallery:  http://localhost:${PORT}/gallery`);
   console.log(`  Posts:    http://localhost:${PORT}/posts`);
+  console.log(`  Assets:   http://localhost:${PORT}/assets`);
   console.log(`  Admin:    http://localhost:${PORT}/admin`);
 });

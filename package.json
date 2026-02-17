@@ -1,29 +1,16 @@
 {
-  "name": "my-app",
-  "version": "0.1.0",
+  "name": "bmb-content-server",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
-    "server": "node server.js",
-    "setup": "node setup.js",
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "node server.js",
+    "setup": "node setup.js"
   },
   "dependencies": {
-    "@vercel/blob": "^1.1.1",
     "bcrypt": "^6.0.0",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
-    "multer": "^2.0.2",
-    "next": "15.4.10",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "uuid": "^13.0.0"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4"
+    "multer": "^2.0.2"
   }
 }

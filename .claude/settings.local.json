@@ -8,7 +8,10 @@
       "Bash(powershell -Command \"Set-Location ''c:\\\\Users\\\\pranav\\\\Documents\\\\BMB\\\\BMB Content Server''; npm install express multer express-session bcrypt uuid dotenv\")",
       "Bash(PATH=\"/c/Program Files/nodejs:$PATH\")",
       "Bash(node -e:*)",
-      "Bash(node migrate.js:*)"
+      "Bash(node migrate.js:*)",
+      "Bash(PATH=\"/c/Program Files/nodejs:$PATH\" node:*)",
+      "Bash(PATH=\"/c/Program Files/nodejs:$PATH\" timeout 5 node:*)",
+      "Bash(PATH=\"/c/Program Files/nodejs:$PATH\" npm install:*)"
     ]
   }
 }

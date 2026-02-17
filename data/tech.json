@@ -4,9 +4,9 @@
   "thumbnails": [
     {
       "id": "5cda7e",
-      "filename": "migrated-143-tech2.png",
+      "filename": "tech2.png",
       "originalName": "tech2.png",
-      "path": "/uploads/thumbnails/migrated-143-tech2.png",
+      "path": "/thumbnails/tech/tech2.png",
       "fileSize": 77835,
       "mimeType": "image/png",
       "subcategory": "",
@@ -14,9 +14,9 @@
     },
     {
       "id": "55a6db",
-      "filename": "migrated-142-tech1.png",
+      "filename": "tech1.png",
       "originalName": "tech1.png",
-      "path": "/uploads/thumbnails/migrated-142-tech1.png",
+      "path": "/thumbnails/tech/tech1.png",
       "fileSize": 67352,
       "mimeType": "image/png",
       "subcategory": "",
