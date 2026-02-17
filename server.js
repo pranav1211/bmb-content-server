@@ -39,11 +39,11 @@ app.use(session({
 
 // ===== RESIZED THUMBNAIL ENDPOINT =====
 const ALLOWED_WIDTHS = [320, 480, 640];
-app.get('/thumb/:width/*', (req, res) => {
+app.get('/thumb/:width/*imgPath', (req, res) => {
   const width = parseInt(req.params.width);
   if (!ALLOWED_WIDTHS.includes(width)) return res.status(400).send('Invalid width');
 
-  const imgPath = req.params[0];
+  const imgPath = req.params.imgPath;
   const srcFile = path.resolve(thumbDir, imgPath);
   if (!srcFile.startsWith(thumbDir) || !fs.existsSync(srcFile)) return res.status(404).send('Not found');
 
