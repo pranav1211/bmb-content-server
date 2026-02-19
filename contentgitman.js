@@ -64,7 +64,7 @@ app.get('/contentg', (req, res) => {
 });
 
 // Handle POST requests with GitHub webhook signature verification
-app.post('/bmbg', (req, res) => {
+app.post('/contentg', (req, res) => {
   const signature = req.get('X-Hub-Signature-256');
   
   if (!signature) {
