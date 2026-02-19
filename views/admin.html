@@ -4,8 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/x-icon" href="https://beyondmebtw.com/assets/images/favicon.ico">
-  <meta property="og:image" content="https://beyondmebtw.com/assets/images/favicon.ico">
+  <link rel="icon" type="image/x-icon" href="https://content.beyondmebtw.com/assets/bmb_logos/favicon2.ico">
+  <meta property="og:image" content="https://content.beyondmebtw.com/assets/bmb_logos/favicon2.ico">
   <title>Admin - BMB Content Server</title>
   <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -15,8 +15,18 @@
   <nav class="bg-slate-900 text-white shadow-lg">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
-        <a href="/" class="text-base sm:text-lg md:text-xl font-bold tracking-tight break-words"></a>BMB Content Server</a>
-        <div class="flex items-center gap-6">
+
+        <!-- Logo + Title -->
+        <a href="/" class="flex items-center gap-3">
+          <img src="https://content.beyondmebtw.com/assets/bmb_logos/BMB_Logo_2.png" alt="BMB Logo"
+            class="h-8 w-auto" />
+          <span class="text-base sm:text-lg md:text-xl font-bold tracking-tight">
+            BMB Content Server
+          </span>
+        </a>
+
+        <!-- Desktop Links -->
+        <div class="hidden md:flex items-center gap-6">
           <a href="/gallery" class="text-slate-300 hover:text-white transition-colors">Gallery</a>
           <a href="/posts" class="text-slate-300 hover:text-white transition-colors">Posts</a>
           <a href="/assets" class="text-slate-300 hover:text-white transition-colors">Assets</a>
@@ -24,7 +34,22 @@
           <a href="/admin/logout"
             class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm transition-colors">Logout</a>
         </div>
+
+        <!-- Mobile Hamburger -->
+        <button id="menu-btn" class="md:hidden text-slate-300 hover:text-white">
+          ☰
+        </button>
+
       </div>
+    </div>
+
+    <!-- Mobile Dropdown -->
+    <div id="mobile-menu" class="hidden md:hidden px-4 pb-4 space-y-3">
+      <a href="/gallery" class="block text-slate-300 hover:text-white">Gallery</a>
+      <a href="/posts" class="block text-slate-300 hover:text-white">Posts</a>
+      <a href="/assets" class="block text-slate-300 hover:text-white">Assets</a>
+      <a href="/admin" class="block text-white font-medium">Admin</a>
+      <a href="/admin/logout" class="block bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm">Logout</a>
     </div>
   </nav>
 
@@ -206,6 +231,13 @@
   <script>
     let categories = [];
     let toastTimeout;
+
+    const btn = document.getElementById('menu-btn');
+    const menu = document.getElementById('mobile-menu');
+
+    btn.addEventListener('click', () => {
+      menu.classList.toggle('hidden');
+    });
 
     function showToast(message, type = 'success') {
       clearTimeout(toastTimeout);

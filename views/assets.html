@@ -1,26 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/x-icon" href="https://beyondmebtw.com/assets/images/favicon.ico">
-  <meta property="og:image" content="https://beyondmebtw.com/assets/images/favicon.ico">
+  <link rel="icon" type="image/x-icon" href="https://content.beyondmebtw.com/assets/bmb_logos/favicon2.ico">
+  <meta property="og:image" content="https://content.beyondmebtw.com/assets/bmb_logos/favicon2.ico">
   <title>Assets - BMB Content Server</title>
   <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-slate-50 min-h-screen">
   <nav class="bg-slate-900 text-white shadow-lg">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
-        <a href="/" class="text-base sm:text-lg md:text-xl font-bold tracking-tight break-words"></a>BMB Content Server</a>
-        <div class="flex items-center gap-6">
+
+        <!-- Logo + Title -->
+        <a href="/" class="flex items-center gap-3">
+          <img src="https://content.beyondmebtw.com/assets/bmb_logos/BMB_Logo_2.png" alt="BMB Logo"
+            class="h-8 w-auto" />
+          <span class="text-base sm:text-lg md:text-xl font-bold tracking-tight">
+            BMB Content Server
+          </span>
+        </a>
+
+        <!-- Desktop Links -->
+        <div class="hidden md:flex items-center gap-6">
           <a href="/gallery" class="text-slate-300 hover:text-white transition-colors">Gallery</a>
           <a href="/posts" class="text-slate-300 hover:text-white transition-colors">Posts</a>
-          <a href="/assets" class="text-white font-medium">Assets</a>
-          <a href="/admin" class="text-slate-300 hover:text-white transition-colors">Admin</a>
+          <a href="/assets" class="text-slate-300 hover:text-white transition-colors">Assets</a>
+          <a href="/admin" class="text-white font-medium">Admin</a>
+          <a href="/admin/logout"
+            class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm transition-colors">Logout</a>
         </div>
+
+        <!-- Mobile Hamburger -->
+        <button id="menu-btn" class="md:hidden text-slate-300 hover:text-white">
+          ☰
+        </button>
+
       </div>
+    </div>
+
+    <!-- Mobile Dropdown -->
+    <div id="mobile-menu" class="hidden md:hidden px-4 pb-4 space-y-3">
+      <a href="/gallery" class="block text-slate-300 hover:text-white">Gallery</a>
+      <a href="/posts" class="block text-slate-300 hover:text-white">Posts</a>
+      <a href="/assets" class="block text-slate-300 hover:text-white">Assets</a>
+      <a href="/admin" class="block text-white font-medium">Admin</a>
+      <a href="/admin/logout" class="block bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm">Logout</a>
     </div>
   </nav>
 
@@ -48,8 +77,12 @@
         <p class="text-slate-500 mt-1" id="countText">Loading...</p>
       </div>
       <div class="flex gap-2">
-        <button onclick="showNewFolderModal()" class="bg-slate-700 hover:bg-slate-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        <button onclick="showNewFolderModal()"
+          class="bg-slate-700 hover:bg-slate-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+          </svg>
           New Folder
         </button>
       </div>
@@ -61,8 +94,12 @@
     <!-- Upload -->
     <div class="bg-white rounded-2xl shadow-sm p-6 mb-8">
       <h2 class="text-lg font-semibold text-slate-900 mb-4">Upload File</h2>
-      <div id="dropZone" class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-blue-400 transition-colors cursor-pointer">
-        <svg class="w-12 h-12 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+      <div id="dropZone"
+        class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-blue-400 transition-colors cursor-pointer">
+        <svg class="w-12 h-12 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        </svg>
         <p class="text-slate-600 mb-2">Click or drag & drop any file</p>
         <p class="text-sm text-slate-400">PDFs, images, audio, icons, etc. (max 50MB)</p>
         <input type="file" id="fileInput" class="hidden">
@@ -77,7 +114,8 @@
         </div>
         <div class="flex gap-2">
           <button id="clearBtn" class="text-sm text-red-500 hover:text-red-600">Remove</button>
-          <button id="uploadBtn" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">Upload</button>
+          <button id="uploadBtn"
+            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">Upload</button>
         </div>
       </div>
     </div>
@@ -93,7 +131,10 @@
 
     <!-- Empty -->
     <div id="empty" class="hidden text-center py-24">
-      <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+      <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+      </svg>
       <h3 class="text-lg font-semibold text-slate-700 mb-2">This folder is empty</h3>
       <p class="text-slate-500">Upload files or create a subfolder.</p>
     </div>
@@ -108,6 +149,13 @@
     let folders = [];
     let activeType = 'all';
     let toastTimer;
+
+    const btn = document.getElementById('menu-btn');
+    const menu = document.getElementById('mobile-menu');
+
+    btn.addEventListener('click', () => {
+      menu.classList.toggle('hidden');
+    });
 
     function showToast(msg, type = 'success') {
       clearTimeout(toastTimer);
@@ -381,7 +429,7 @@
         html += `
         <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex">
           ${isImage ? `<div class="w-16 h-16 flex-shrink-0 bg-slate-100"><img src="${a.path}" class="w-full h-full object-cover" alt="${a.filename}" onerror="this.parentElement.innerHTML='<div class=\\'flex items-center justify-center w-full h-full text-xl\\'>${getFileIcon(a.mimeType)}</div>'"></div>`
-          : `<div class="w-16 h-16 flex-shrink-0 bg-slate-100 flex items-center justify-center text-2xl">${getFileIcon(a.mimeType)}</div>`}
+            : `<div class="w-16 h-16 flex-shrink-0 bg-slate-100 flex items-center justify-center text-2xl">${getFileIcon(a.mimeType)}</div>`}
           <div class="flex-1 flex items-center justify-between p-3 min-w-0">
             <div class="min-w-0 flex-1">
               <p class="text-sm font-medium text-slate-800 truncate" title="${a.filename}">${a.filename}</p>
@@ -417,7 +465,7 @@
     dropZone.addEventListener('click', () => fileInput.click());
     dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('border-blue-400', 'bg-blue-50'); });
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-blue-400', 'bg-blue-50'));
-    dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('border-blue-400', 'bg-blue-50'); if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; showFilePreview(e.dataTransfer.files[0]); }});
+    dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('border-blue-400', 'bg-blue-50'); if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; showFilePreview(e.dataTransfer.files[0]); } });
     fileInput.addEventListener('change', () => { if (fileInput.files.length) showFilePreview(fileInput.files[0]); });
     function showFilePreview(file) {
       document.getElementById('fileIcon').textContent = getFileIcon(file.type);
@@ -468,4 +516,5 @@
     loadContent();
   </script>
 </body>
+
 </html>

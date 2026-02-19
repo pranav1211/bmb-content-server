@@ -1,60 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/x-icon" href="https://beyondmebtw.com/assets/images/favicon.ico">
-  <meta property="og:image" content="https://beyondmebtw.com/assets/images/favicon.ico">
+  <link rel="icon" type="image/x-icon" href="https://content.beyondmebtw.com/assets/bmb_logos/favicon2.ico">
+  <meta property="og:image" content="https://content.beyondmebtw.com/assets/bmb_logos/favicon2.ico">
   <title>Gallery - BMB Content Server</title>
   <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
   <link rel="preconnect" href="https://beyondmebtw.com" crossorigin>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-slate-50 min-h-screen">
   <nav class="bg-slate-900 text-white shadow-lg">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
-        <a href="/" class="text-base sm:text-lg md:text-xl font-bold tracking-tight break-words"></a>BMB Content Server</a>
-        <div class="flex items-center gap-6">
-          <a href="/gallery" class="text-white font-medium">Gallery</a>
+
+        <!-- Logo + Title -->
+        <a href="/" class="flex items-center gap-3">
+          <img src="https://content.beyondmebtw.com/assets/bmb_logos/BMB_Logo_2.png" alt="BMB Logo"
+            class="h-8 w-auto" />
+          <span class="text-base sm:text-lg md:text-xl font-bold tracking-tight">
+            BMB Content Server
+          </span>
+        </a>
+
+        <!-- Desktop Links -->
+        <div class="hidden md:flex items-center gap-6">
+          <a href="/gallery" class="text-slate-300 hover:text-white transition-colors">Gallery</a>
           <a href="/posts" class="text-slate-300 hover:text-white transition-colors">Posts</a>
           <a href="/assets" class="text-slate-300 hover:text-white transition-colors">Assets</a>
-          <a href="/admin" class="text-slate-300 hover:text-white transition-colors">Admin</a>
+          <a href="/admin" class="text-white font-medium">Admin</a>
+          <a href="/admin/logout"
+            class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm transition-colors">Logout</a>
         </div>
+
+        <!-- Mobile Hamburger -->
+        <button id="menu-btn" class="md:hidden text-slate-300 hover:text-white">
+          ☰
+        </button>
+
       </div>
+    </div>
+
+    <!-- Mobile Dropdown -->
+    <div id="mobile-menu" class="hidden md:hidden px-4 pb-4 space-y-3">
+      <a href="/gallery" class="block text-slate-300 hover:text-white">Gallery</a>
+      <a href="/posts" class="block text-slate-300 hover:text-white">Posts</a>
+      <a href="/assets" class="block text-slate-300 hover:text-white">Assets</a>
+      <a href="/admin" class="block text-white font-medium">Admin</a>
+      <a href="/admin/logout" class="block bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm">Logout</a>
     </div>
   </nav>
 
   <!-- Toast -->
   <div id="toast" class="fixed top-4 right-4 z-50 transform translate-x-[120%] transition-transform duration-300">
-    <div id="toastContent" class="px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 bg-emerald-50 border border-emerald-200">
+    <div id="toastContent"
+      class="px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 bg-emerald-50 border border-emerald-200">
       <span id="toastIcon" class="font-bold text-emerald-600">&check;</span>
       <span id="toastMsg" class="text-sm font-medium text-emerald-800">Copied!</span>
     </div>
   </div>
 
   <!-- Edit Modal -->
-  <div id="editModal" class="fixed inset-0 bg-black/50 z-40 hidden items-center justify-center p-4" onclick="closeEditModal()">
+  <div id="editModal" class="fixed inset-0 bg-black/50 z-40 hidden items-center justify-center p-4"
+    onclick="closeEditModal()">
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6" onclick="event.stopPropagation()">
       <h3 class="text-lg font-semibold text-slate-900 mb-4">Edit Thumbnail</h3>
       <input type="hidden" id="editId">
       <div class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Filename</label>
-          <input id="editName" type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+          <input id="editName" type="text"
+            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
         </div>
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Category</label>
-          <select id="editCategory" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" onchange="updateEditSubcategories()"></select>
+          <select id="editCategory"
+            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            onchange="updateEditSubcategories()"></select>
         </div>
         <div id="editSubWrap">
           <label class="block text-sm font-medium text-slate-700 mb-1">Subcategory</label>
-          <select id="editSubcategory" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"></select>
+          <select id="editSubcategory"
+            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"></select>
         </div>
       </div>
       <div class="flex justify-end gap-2 mt-6">
         <button onclick="closeEditModal()" class="px-4 py-2 text-sm text-slate-600 hover:text-slate-800">Cancel</button>
-        <button onclick="saveEdit()" class="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Save</button>
+        <button onclick="saveEdit()"
+          class="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Save</button>
       </div>
     </div>
   </div>
@@ -80,10 +116,15 @@
 
     <!-- Empty -->
     <div id="empty" class="hidden text-center py-24">
-      <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
       <h3 class="text-lg font-semibold text-slate-700 mb-2">No thumbnails found</h3>
       <p class="text-slate-500 mb-6">Try a different filter or upload new thumbnails.</p>
-      <a href="/admin" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg transition-colors">Upload Thumbnail</a>
+      <a href="/admin"
+        class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg transition-colors">Upload
+        Thumbnail</a>
     </div>
 
     <!-- Gallery Grid -->
@@ -91,7 +132,8 @@
 
     <!-- Load More -->
     <div id="loadMoreWrap" class="hidden text-center mt-8">
-      <button id="loadMoreBtn" onclick="loadMore()" class="bg-slate-700 hover:bg-slate-800 text-white font-medium px-8 py-3 rounded-lg transition-colors">
+      <button id="loadMoreBtn" onclick="loadMore()"
+        class="bg-slate-700 hover:bg-slate-800 text-white font-medium px-8 py-3 rounded-lg transition-colors">
         Load More
       </button>
       <p id="loadMoreText" class="text-sm text-slate-400 mt-2"></p>
@@ -99,11 +141,16 @@
   </main>
 
   <!-- Lightbox -->
-  <div id="lightbox" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4" onclick="closeLightbox()">
-    <button class="absolute top-4 right-4 text-white hover:text-slate-300 transition-colors z-10" onclick="closeLightbox()">
-      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+  <div id="lightbox" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4"
+    onclick="closeLightbox()">
+    <button class="absolute top-4 right-4 text-white hover:text-slate-300 transition-colors z-10"
+      onclick="closeLightbox()">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
     </button>
-    <img id="lightboxImg" class="max-w-full max-h-[90vh] rounded-xl shadow-2xl" alt="Full size" onclick="event.stopPropagation()">
+    <img id="lightboxImg" class="max-w-full max-h-[90vh] rounded-xl shadow-2xl" alt="Full size"
+      onclick="event.stopPropagation()">
   </div>
 
   <script>
@@ -114,6 +161,13 @@
     let activeSub = 'all';
     let displayCount = PAGE_SIZE;
     let toastTimer;
+
+    const btn = document.getElementById('menu-btn');
+    const menu = document.getElementById('mobile-menu');
+
+    btn.addEventListener('click', () => {
+      menu.classList.toggle('hidden');
+    });
 
     function showToast(msg, type = 'success') {
       clearTimeout(toastTimer);
@@ -382,4 +436,5 @@
     init();
   </script>
 </body>
+
 </html>
